@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useMood } from '@/contexts/MoodContext';
+import { useProgress } from '@/contexts/ProgressContext';
 import { 
   ArrowLeft, 
   Play, 
@@ -11,10 +12,13 @@ import {
   BookOpen,
   Video,
   Trophy,
-  Flame
+  Flame,
+  ExternalLink,
+  X,
+  History
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface LearningModule {
   id: number;
@@ -22,37 +26,163 @@ interface LearningModule {
   type: 'video' | 'article' | 'quiz';
   duration: string;
   completed: boolean;
+  videoId?: string;
+  articleUrl?: string;
 }
 
-const generateModules = (topic: string): LearningModule[] => [
-  { id: 1, title: `Introduction to ${topic}`, type: 'video', duration: '15 min', completed: false },
-  { id: 2, title: `Core Concepts of ${topic}`, type: 'article', duration: '10 min', completed: false },
-  { id: 3, title: `Setting Up Your ${topic} Environment`, type: 'video', duration: '20 min', completed: false },
-  { id: 4, title: 'Knowledge Check', type: 'quiz', duration: '5 min', completed: false },
-  { id: 5, title: `Building Your First ${topic} Project`, type: 'video', duration: '30 min', completed: false },
-  { id: 6, title: 'Best Practices & Patterns', type: 'article', duration: '15 min', completed: false },
-  { id: 7, title: 'Advanced Techniques', type: 'video', duration: '25 min', completed: false },
-  { id: 8, title: 'Final Assessment', type: 'quiz', duration: '15 min', completed: false },
-];
+const generateModules = (topic: string): LearningModule[] => {
+  const searchTopic = encodeURIComponent(topic);
+  return [
+    { 
+      id: 1, 
+      title: `Introduction to ${topic}`, 
+      type: 'video', 
+      duration: '15 min', 
+      completed: false,
+      videoId: `https://www.youtube.com/results?search_query=${searchTopic}+introduction+tutorial`
+    },
+    { 
+      id: 2, 
+      title: `Core Concepts of ${topic}`, 
+      type: 'article', 
+      duration: '10 min', 
+      completed: false,
+      articleUrl: `https://www.google.com/search?q=${searchTopic}+core+concepts+guide`
+    },
+    { 
+      id: 3, 
+      title: `Setting Up Your ${topic} Environment`, 
+      type: 'video', 
+      duration: '20 min', 
+      completed: false,
+      videoId: `https://www.youtube.com/results?search_query=${searchTopic}+setup+environment+tutorial`
+    },
+    { 
+      id: 4, 
+      title: 'Knowledge Check', 
+      type: 'quiz', 
+      duration: '5 min', 
+      completed: false 
+    },
+    { 
+      id: 5, 
+      title: `Building Your First ${topic} Project`, 
+      type: 'video', 
+      duration: '30 min', 
+      completed: false,
+      videoId: `https://www.youtube.com/results?search_query=${searchTopic}+beginner+project+tutorial`
+    },
+    { 
+      id: 6, 
+      title: 'Best Practices & Patterns', 
+      type: 'article', 
+      duration: '15 min', 
+      completed: false,
+      articleUrl: `https://www.google.com/search?q=${searchTopic}+best+practices+patterns`
+    },
+    { 
+      id: 7, 
+      title: 'Advanced Techniques', 
+      type: 'video', 
+      duration: '25 min', 
+      completed: false,
+      videoId: `https://www.youtube.com/results?search_query=${searchTopic}+advanced+techniques+tutorial`
+    },
+    { 
+      id: 8, 
+      title: 'Final Assessment', 
+      type: 'quiz', 
+      duration: '15 min', 
+      completed: false 
+    },
+  ];
+};
 
 export function LearningPathView() {
   const navigate = useNavigate();
   const location = useLocation();
   const { moodColors } = useMood();
-  const pathData = location.state as { topic: string; mood: string; speed: string; format: string; goal: string } | null;
+  const { addLearningPath, updateModuleCompletion, removeModuleCompletion, getPathById } = useProgress();
   
-  const [modules, setModules] = useState<LearningModule[]>(
-    generateModules(pathData?.topic || 'Learning')
-  );
+  const pathData = location.state as { 
+    topic: string; 
+    mood: string; 
+    speed: string; 
+    format: string; 
+    goal: string;
+    pathId?: string;
+  } | null;
+  
+  const [pathId, setPathId] = useState<string | null>(pathData?.pathId || null);
+  const [modules, setModules] = useState<LearningModule[]>([]);
+  const [activeVideo, setActiveVideo] = useState<string | null>(null);
 
-  const toggleComplete = (id: number) => {
+  useEffect(() => {
+    if (pathData) {
+      const generatedModules = generateModules(pathData.topic);
+      
+      // Check if this is an existing path
+      if (pathData.pathId) {
+        const existingPath = getPathById(pathData.pathId);
+        if (existingPath) {
+          // Restore completed status
+          const modulesWithCompletion = generatedModules.map(m => ({
+            ...m,
+            completed: existingPath.completedModules.some(cm => cm.id === m.id)
+          }));
+          setModules(modulesWithCompletion);
+          setPathId(pathData.pathId);
+          return;
+        }
+      }
+      
+      // Create new path
+      const newPathId = addLearningPath({
+        topic: pathData.topic,
+        mood: pathData.mood,
+        speed: pathData.speed,
+        format: pathData.format,
+        goal: pathData.goal,
+        totalModules: generatedModules.length
+      });
+      setPathId(newPathId);
+      setModules(generatedModules);
+    }
+  }, []);
+
+  const toggleComplete = (module: LearningModule) => {
+    if (!pathId) return;
+    
+    const newCompleted = !module.completed;
+    
+    if (newCompleted) {
+      updateModuleCompletion(pathId, {
+        id: module.id,
+        title: module.title,
+        type: module.type,
+        completedAt: new Date()
+      });
+    } else {
+      removeModuleCompletion(pathId, module.id);
+    }
+    
     setModules(modules.map(m => 
-      m.id === id ? { ...m, completed: !m.completed } : m
+      m.id === module.id ? { ...m, completed: newCompleted } : m
     ));
   };
 
+  const openResource = (module: LearningModule, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (module.type === 'video' && module.videoId) {
+      window.open(module.videoId, '_blank');
+    } else if (module.type === 'article' && module.articleUrl) {
+      window.open(module.articleUrl, '_blank');
+    }
+  };
+
   const completedCount = modules.filter(m => m.completed).length;
-  const progress = (completedCount / modules.length) * 100;
+  const progress = modules.length > 0 ? (completedCount / modules.length) * 100 : 0;
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -84,10 +214,14 @@ export function LearningPathView() {
 
       <div className="relative z-10 container mx-auto px-6 py-12">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center justify-between gap-4 mb-8">
           <Button variant="ghost" onClick={() => navigate('/')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Home
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/progress')}>
+            <History className="w-4 h-4 mr-2" />
+            My Progress
           </Button>
         </div>
 
@@ -140,6 +274,8 @@ export function LearningPathView() {
         <div className="space-y-4">
           {modules.map((module, index) => {
             const Icon = getTypeIcon(module.type);
+            const hasResource = module.type === 'video' || module.type === 'article';
+            
             return (
               <motion.div
                 key={module.id}
@@ -152,7 +288,7 @@ export function LearningPathView() {
                     ? 'border-primary/30 bg-primary/5' 
                     : 'hover:border-border'
                 )}
-                onClick={() => toggleComplete(module.id)}
+                onClick={() => toggleComplete(module)}
               >
                 <div className={cn(
                   'w-12 h-12 rounded-xl flex items-center justify-center transition-all',
@@ -181,18 +317,40 @@ export function LearningPathView() {
                     </span>
                   </div>
                 </div>
-                <Button 
-                  variant={module.completed ? 'ghost' : 'mood'} 
-                  size="sm"
-                  className="shrink-0"
-                >
-                  {module.completed ? 'Review' : (
-                    <>
-                      <Play className="w-4 h-4" />
-                      Start
-                    </>
+                <div className="flex items-center gap-2">
+                  {hasResource && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="shrink-0"
+                      onClick={(e) => openResource(module, e)}
+                    >
+                      <ExternalLink className="w-4 h-4 mr-1" />
+                      {module.type === 'video' ? 'Watch' : 'Read'}
+                    </Button>
                   )}
-                </Button>
+                  <Button 
+                    variant={module.completed ? 'ghost' : 'mood'} 
+                    size="sm"
+                    className="shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleComplete(module);
+                    }}
+                  >
+                    {module.completed ? (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 mr-1" />
+                        Done
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4" />
+                        Start
+                      </>
+                    )}
+                  </Button>
+                </div>
               </motion.div>
             );
           })}
