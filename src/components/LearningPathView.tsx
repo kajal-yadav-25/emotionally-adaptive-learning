@@ -628,13 +628,13 @@ export function LearningPathView() {
                       <div className="px-6 pb-6">
                         {module.type === 'video' && module.searchQuery && (
                           <div className="space-y-4">
-                            {/* YouTube Search Embed */}
+                            {/* YouTube Video Embed */}
                             <div className="rounded-xl overflow-hidden bg-card/50 border border-border">
                               <div className="aspect-video relative">
                                 <iframe
                                   width="100%"
                                   height="100%"
-                                  src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(module.searchQuery)}`}
+                                  src={`https://www.youtube.com/embed/videoseries?list=PLillGF-RfqbYeckUaD1z6nviTp31GLTH8&autoplay=0`}
                                   title={module.title}
                                   frameBorder="0"
                                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -642,21 +642,19 @@ export function LearningPathView() {
                                   className="w-full h-full"
                                 />
                               </div>
-                            </div>
-                            
-                            {/* YouTube Search Button */}
-                            <div className="flex items-center justify-between p-4 bg-card/30 rounded-xl border border-border">
-                              <div>
-                                <p className="font-medium">Search for more videos</p>
-                                <p className="text-sm text-muted-foreground">Find related tutorials on YouTube</p>
+                              <div className="p-4 bg-card/30 border-t border-border">
+                                <p className="text-sm text-muted-foreground mb-3">
+                                  Looking for videos on <strong className="text-foreground">{module.searchQuery}</strong>? Click below to find the best tutorials:
+                                </p>
+                                <Button 
+                                  variant="mood" 
+                                  className="w-full"
+                                  onClick={() => openYouTubeSearch(module.searchQuery!)}
+                                >
+                                  <ExternalLink className="w-4 h-4 mr-2" />
+                                  Watch {pathData?.topic} Tutorials on YouTube
+                                </Button>
                               </div>
-                              <Button 
-                                variant="outline" 
-                                onClick={() => openYouTubeSearch(module.searchQuery!)}
-                              >
-                                <ExternalLink className="w-4 h-4 mr-2" />
-                                Browse on YouTube
-                              </Button>
                             </div>
                           </div>
                         )}
