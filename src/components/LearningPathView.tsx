@@ -13,10 +13,9 @@ import {
   Video,
   Trophy,
   Flame,
-  X,
   History,
-  ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ExternalLink
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
@@ -27,164 +26,178 @@ interface LearningModule {
   type: 'video' | 'article' | 'quiz';
   duration: string;
   completed: boolean;
-  videoId?: string;
+  searchQuery?: string;
   articleContent?: string;
-  articleUrl?: string;
 }
 
-// Curated YouTube video IDs for different topics
-const getCuratedVideoId = (topic: string, moduleType: string): string => {
-  const topicLower = topic.toLowerCase();
-  
-  const videoMap: Record<string, Record<string, string>> = {
-    'react': {
-      'introduction': 'Tn6-PIqc4UM',
-      'setup': 'CgkZ7MvWUAA',
-      'project': 'b9eMGE7QtTk',
-      'advanced': 'TNhaISOUy6Q'
-    },
-    'react.js': {
-      'introduction': 'Tn6-PIqc4UM',
-      'setup': 'CgkZ7MvWUAA',
-      'project': 'b9eMGE7QtTk',
-      'advanced': 'TNhaISOUy6Q'
-    },
-    'javascript': {
-      'introduction': 'W6NZfCO5SIk',
-      'setup': 'PkZNo7MFNFg',
-      'project': 'jS4aFq5-91M',
-      'advanced': 'Bv_5Zv5c-Ts'
-    },
-    'python': {
-      'introduction': '_uQrJ0TkZlc',
-      'setup': 'rfscVS0vtbw',
-      'project': 'XGf2GcyHPhc',
-      'advanced': 'HGOBQPFzWKo'
-    },
-    'web development': {
-      'introduction': 'G3e-cpL7ofc',
-      'setup': 'ZxKM3DCV2kE',
-      'project': 'mU6anWqZJcc',
-      'advanced': 'sBws8MSXN7A'
-    },
-    'data structures': {
-      'introduction': '8hly31xKli0',
-      'setup': 'RBSGKlAvoiM',
-      'project': 'zg9ih6SVACc',
-      'advanced': 'B31LgI4Y4DQ'
-    },
-    'machine learning': {
-      'introduction': 'KNAWp2S3w94',
-      'setup': 'i_LwzRVP7bg',
-      'project': 'NWONeJKn6kc',
-      'advanced': 'Gv9_4yMHFhI'
-    }
+// Generate YouTube search query based on topic and module type
+const getVideoSearchQuery = (topic: string, moduleType: string): string => {
+  const queries: Record<string, string> = {
+    'introduction': `${topic} tutorial for beginners introduction`,
+    'setup': `${topic} setup installation tutorial`,
+    'project': `${topic} project tutorial build`,
+    'advanced': `${topic} advanced tutorial tips`
   };
-
-  // Find matching topic
-  for (const [key, videos] of Object.entries(videoMap)) {
-    if (topicLower.includes(key)) {
-      return videos[moduleType] || videos['introduction'];
-    }
-  }
-  
-  // Default videos for unknown topics
-  const defaultVideos: Record<string, string> = {
-    'introduction': 'dQw4w9WgXcQ',
-    'setup': 'dQw4w9WgXcQ',
-    'project': 'dQw4w9WgXcQ',
-    'advanced': 'dQw4w9WgXcQ'
-  };
-  
-  return defaultVideos[moduleType] || 'dQw4w9WgXcQ';
+  return queries[moduleType] || `${topic} tutorial`;
 };
 
-// Generate article content for different modules
-const getArticleContent = (topic: string, moduleTitle: string): string => {
+// Generate comprehensive article content based on topic
+const generateArticleContent = (topic: string, moduleTitle: string): string => {
+  const topicCapitalized = topic.charAt(0).toUpperCase() + topic.slice(1);
+  
   if (moduleTitle.includes('Core Concepts')) {
     return `
-# Core Concepts of ${topic}
+# Core Concepts of ${topicCapitalized}
 
 ## Overview
-Understanding the fundamental concepts is crucial for mastering ${topic}. This guide will walk you through the essential building blocks.
+Understanding the fundamental concepts is crucial for mastering ${topicCapitalized}. This comprehensive guide will walk you through the essential building blocks that form the foundation of ${topicCapitalized}.
+
+## What is ${topicCapitalized}?
+${topicCapitalized} is a powerful technology/concept that enables developers and learners to build efficient solutions. At its core, it focuses on providing a structured approach to problem-solving.
 
 ## Key Principles
 
-### 1. Foundation
-Every journey in ${topic} starts with understanding its core philosophy. The main idea is to break complex problems into smaller, manageable pieces.
+### 1. Foundational Understanding
+Every journey in ${topicCapitalized} starts with understanding its core philosophy:
+- **Modularity**: Breaking complex problems into smaller, manageable pieces
+- **Abstraction**: Hiding complexity behind simple interfaces
+- **Reusability**: Creating components that can be used multiple times
 
-### 2. Building Blocks
-- **Components**: The basic units that make up any ${topic} application
-- **State Management**: How data flows and changes over time
-- **Patterns**: Common approaches to solving recurring problems
+### 2. Core Building Blocks
+The main components that make up ${topicCapitalized} include:
+- **Components/Modules**: The basic units that form the structure
+- **State/Data**: How information is stored and managed
+- **Logic/Functions**: The operations that transform data
+- **Interfaces**: How different parts communicate
 
-### 3. Best Practices
-1. Start simple and iterate
-2. Write clean, readable code
-3. Test your implementations
-4. Document your work
+### 3. Design Patterns
+Common patterns used in ${topicCapitalized}:
+- **Observer Pattern**: Watching for changes and reacting
+- **Factory Pattern**: Creating objects in a structured way
+- **Singleton Pattern**: Ensuring single instances when needed
 
-## Getting Started
-Begin by setting up your development environment and creating your first simple project. Practice is key to mastering these concepts.
+## Getting Started Checklist
+1. ✅ Set up your development environment
+2. ✅ Understand the basic terminology
+3. ✅ Write your first simple example
+4. ✅ Explore official documentation
+5. ✅ Join community forums
 
-## Resources
-- Official documentation
-- Community forums
-- Practice exercises
-- Video tutorials
+## Common Terminology
+| Term | Definition |
+|------|------------|
+| API | Application Programming Interface - how components interact |
+| Framework | A structure that provides ready-made components |
+| Library | A collection of pre-written code |
+| Runtime | The environment where code executes |
 
 ## Next Steps
-Once you've grasped these concepts, move on to building your first project to apply what you've learned.
+Once you've grasped these concepts, move on to setting up your environment and building your first project. Remember: practice is key to mastery!
+
+## Resources for Learning ${topicCapitalized}
+- Official Documentation
+- Online Tutorials and Courses
+- Community Forums and Discord
+- GitHub Repositories with Examples
+- YouTube Tutorial Channels
     `;
   }
   
   if (moduleTitle.includes('Best Practices')) {
     return `
-# Best Practices & Patterns for ${topic}
+# Best Practices & Patterns for ${topicCapitalized}
 
 ## Introduction
-Following best practices ensures your code is maintainable, scalable, and efficient.
+Following best practices ensures your ${topicCapitalized} code is maintainable, scalable, and efficient. This guide covers industry-standard patterns that professional developers use.
 
-## Design Patterns
+## Code Organization
 
-### 1. Modular Design
-Break your application into independent, reusable modules. This makes testing easier and improves code organization.
-
-### 2. DRY Principle
-Don't Repeat Yourself. Extract common functionality into reusable functions or components.
-
-### 3. SOLID Principles
-- **S**ingle Responsibility
-- **O**pen/Closed
-- **L**iskov Substitution
-- **I**nterface Segregation
-- **D**ependency Inversion
-
-## Code Quality
+### Project Structure
+Organize your ${topicCapitalized} project with clear separation:
+\`\`\`
+project/
+├── src/
+│   ├── components/    # Reusable pieces
+│   ├── utils/         # Helper functions
+│   ├── services/      # External integrations
+│   └── types/         # Type definitions
+├── tests/             # Test files
+└── docs/              # Documentation
+\`\`\`
 
 ### Naming Conventions
-- Use descriptive, meaningful names
-- Follow consistent naming patterns
-- Avoid abbreviations unless widely understood
+- **Variables**: Use descriptive camelCase names (\`userName\`, \`itemCount\`)
+- **Constants**: Use UPPER_SNAKE_CASE (\`MAX_RETRIES\`, \`API_URL\`)
+- **Functions**: Use verb phrases (\`getUserData\`, \`calculateTotal\`)
+- **Classes**: Use PascalCase (\`UserService\`, \`DataProcessor\`)
 
-### Documentation
-- Comment complex logic
-- Write clear function descriptions
-- Maintain up-to-date README files
+## Design Principles
 
-## Performance Tips
-1. Optimize critical paths
-2. Use caching strategically
-3. Profile before optimizing
-4. Measure improvements
+### SOLID Principles
+1. **Single Responsibility**: Each module does one thing well
+2. **Open/Closed**: Open for extension, closed for modification
+3. **Liskov Substitution**: Subtypes must be substitutable
+4. **Interface Segregation**: Many specific interfaces over one general
+5. **Dependency Inversion**: Depend on abstractions, not concretions
+
+### DRY (Don't Repeat Yourself)
+Extract common functionality:
+- Create utility functions for repeated operations
+- Build reusable components
+- Use configuration files for constants
+
+### KISS (Keep It Simple)
+- Avoid over-engineering
+- Write readable code over clever code
+- Refactor when complexity grows
+
+## Performance Best Practices
+
+### Optimization Guidelines
+1. **Measure First**: Profile before optimizing
+2. **Cache Strategically**: Store expensive computations
+3. **Lazy Load**: Load resources only when needed
+4. **Minimize Dependencies**: Keep bundle sizes small
+
+### Common Performance Pitfalls
+- ❌ Premature optimization
+- ❌ Unnecessary re-renders/recalculations
+- ❌ Memory leaks from uncleared resources
+- ❌ Blocking operations on main thread
 
 ## Testing Strategy
-- Unit tests for individual components
-- Integration tests for workflows
-- End-to-end tests for critical paths
+
+### Test Pyramid
+\`\`\`
+        /\\
+       /  \\  E2E Tests (few)
+      /----\\
+     /      \\  Integration Tests (some)
+    /--------\\
+   /          \\  Unit Tests (many)
+  --------------
+\`\`\`
+
+### What to Test
+- ✅ Business logic and calculations
+- ✅ Edge cases and error handling
+- ✅ User interactions and workflows
+- ✅ API integrations
+
+## Documentation
+- Write clear README files
+- Add inline comments for complex logic
+- Maintain API documentation
+- Include usage examples
+
+## Security Considerations
+- Validate all inputs
+- Sanitize data before display
+- Use secure authentication methods
+- Keep dependencies updated
 
 ## Conclusion
-Adopting these practices from the start will save you time and headaches in the long run.
+Adopting these practices from the start will make your ${topicCapitalized} projects more professional and maintainable. Remember: good code is not just about making it work, but making it last.
     `;
   }
   
@@ -192,39 +205,83 @@ Adopting these practices from the start will save you time and headaches in the 
 # ${moduleTitle}
 
 ## Introduction
-Welcome to this comprehensive guide on ${moduleTitle}. This article will help you understand the key concepts and practical applications.
+Welcome to this comprehensive guide on ${moduleTitle}. This article will help you understand the key concepts and practical applications related to ${topicCapitalized}.
 
-## Key Topics
+## Learning Objectives
+By the end of this module, you will:
+- Understand the fundamental concepts of ${moduleTitle.toLowerCase()}
+- Be able to apply these concepts in practical scenarios
+- Know the common patterns and best practices
+- Have hands-on experience through examples
+
+## Key Concepts
 
 ### Understanding the Basics
-Before diving deep, it's important to establish a solid foundation. Take your time to understand each concept thoroughly.
+Before diving deep into ${topicCapitalized}, it's important to establish a solid foundation. Here are the core concepts you need to grasp:
 
-### Practical Applications
-Theory is important, but practice makes perfect. Try implementing what you learn in small projects.
+1. **Fundamentals**: The building blocks that everything else is built upon
+2. **Syntax & Structure**: How to write and organize your code
+3. **Common Operations**: The most frequently used operations and functions
+4. **Error Handling**: How to deal with problems gracefully
 
-### Common Challenges
-- Learning curve can be steep initially
-- Understanding when to apply different techniques
-- Keeping up with updates and changes
+### Why ${topicCapitalized} Matters
+In today's technology landscape, ${topicCapitalized} has become essential because:
+- It solves real-world problems efficiently
+- It has a large and supportive community
+- It continues to evolve with new features
+- It integrates well with other technologies
+
+## Practical Examples
+
+### Example 1: Getting Started
+Start with the simplest possible example to understand the basics. Don't try to build complex projects immediately.
+
+### Example 2: Building Blocks
+Once comfortable with basics, start combining concepts to create more complex functionality.
+
+### Example 3: Real-World Application
+Apply what you've learned to solve actual problems you encounter.
 
 ## Step-by-Step Guide
 
-1. **Start Small**: Begin with simple examples
-2. **Build Up**: Gradually increase complexity
-3. **Practice**: Apply concepts in real projects
-4. **Review**: Regularly revisit and reinforce learning
+### Step 1: Environment Setup
+Make sure your development environment is properly configured with all necessary tools and dependencies.
+
+### Step 2: Basic Implementation
+Create a simple implementation that demonstrates core concepts.
+
+### Step 3: Testing & Validation
+Verify that your implementation works correctly with various inputs.
+
+### Step 4: Refinement
+Improve your code based on feedback and new learnings.
+
+## Common Mistakes to Avoid
+- ❌ Skipping fundamentals to learn advanced topics
+- ❌ Not practicing regularly
+- ❌ Ignoring error messages
+- ❌ Copy-pasting without understanding
+- ❌ Working in isolation without community support
 
 ## Tips for Success
-- Take notes while learning
-- Join community discussions
-- Work on personal projects
-- Teach others what you learn
+- ✅ Take notes while learning
+- ✅ Build small projects to reinforce concepts
+- ✅ Join online communities and forums
+- ✅ Read official documentation
+- ✅ Teach others what you learn
 
 ## Summary
-Mastering ${topic} takes time and dedication. Stay consistent with your learning and don't be afraid to make mistakes – they're part of the journey.
+Mastering ${topicCapitalized} takes time and dedication. Stay consistent with your learning, practice regularly, and don't be afraid to make mistakes – they're part of the journey.
 
-## Further Reading
-Explore official documentation and community resources for more in-depth information.
+## Additional Resources
+- Official ${topicCapitalized} Documentation
+- Community Forums and Discord Servers
+- YouTube Tutorial Channels
+- Interactive Coding Platforms
+- Open Source Projects to Study
+
+## What's Next?
+Continue to the next module to build upon what you've learned here. Remember to practice each concept before moving forward!
   `;
 };
 
@@ -236,7 +293,7 @@ const generateModules = (topic: string): LearningModule[] => {
       type: 'video', 
       duration: '15 min', 
       completed: false,
-      videoId: getCuratedVideoId(topic, 'introduction')
+      searchQuery: getVideoSearchQuery(topic, 'introduction')
     },
     { 
       id: 2, 
@@ -244,7 +301,7 @@ const generateModules = (topic: string): LearningModule[] => {
       type: 'article', 
       duration: '10 min', 
       completed: false,
-      articleContent: getArticleContent(topic, `Core Concepts of ${topic}`)
+      articleContent: generateArticleContent(topic, `Core Concepts of ${topic}`)
     },
     { 
       id: 3, 
@@ -252,7 +309,7 @@ const generateModules = (topic: string): LearningModule[] => {
       type: 'video', 
       duration: '20 min', 
       completed: false,
-      videoId: getCuratedVideoId(topic, 'setup')
+      searchQuery: getVideoSearchQuery(topic, 'setup')
     },
     { 
       id: 4, 
@@ -267,7 +324,7 @@ const generateModules = (topic: string): LearningModule[] => {
       type: 'video', 
       duration: '30 min', 
       completed: false,
-      videoId: getCuratedVideoId(topic, 'project')
+      searchQuery: getVideoSearchQuery(topic, 'project')
     },
     { 
       id: 6, 
@@ -275,7 +332,7 @@ const generateModules = (topic: string): LearningModule[] => {
       type: 'article', 
       duration: '15 min', 
       completed: false,
-      articleContent: getArticleContent(topic, 'Best Practices & Patterns')
+      articleContent: generateArticleContent(topic, 'Best Practices & Patterns')
     },
     { 
       id: 7, 
@@ -283,7 +340,7 @@ const generateModules = (topic: string): LearningModule[] => {
       type: 'video', 
       duration: '25 min', 
       completed: false,
-      videoId: getCuratedVideoId(topic, 'advanced')
+      searchQuery: getVideoSearchQuery(topic, 'advanced')
     },
     { 
       id: 8, 
@@ -318,11 +375,9 @@ export function LearningPathView() {
     if (pathData) {
       const generatedModules = generateModules(pathData.topic);
       
-      // Check if this is an existing path
       if (pathData.pathId) {
         const existingPath = getPathById(pathData.pathId);
         if (existingPath) {
-          // Restore completed status
           const modulesWithCompletion = generatedModules.map(m => ({
             ...m,
             completed: existingPath.completedModules.some(cm => cm.id === m.id)
@@ -333,7 +388,6 @@ export function LearningPathView() {
         }
       }
       
-      // Create new path
       const newPathId = addLearningPath({
         topic: pathData.topic,
         mood: pathData.mood,
@@ -371,6 +425,10 @@ export function LearningPathView() {
   const toggleExpand = (moduleId: number, e: React.MouseEvent) => {
     e.stopPropagation();
     setExpandedModule(expandedModule === moduleId ? null : moduleId);
+  };
+
+  const openYouTubeSearch = (query: string) => {
+    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, '_blank');
   };
 
   const completedCount = modules.filter(m => m.completed).length;
@@ -437,7 +495,7 @@ export function LearningPathView() {
             <div className="flex items-center gap-6">
               <div className="text-center">
                 <div className="flex items-center gap-2 text-3xl font-bold">
-                  <Flame className={`w-6 h-6 text-orange-500`} />
+                  <Flame className="w-6 h-6 text-orange-500" />
                   {completedCount}
                 </div>
                 <span className="text-sm text-muted-foreground">Completed</span>
@@ -568,48 +626,76 @@ export function LearningPathView() {
                       className="overflow-hidden"
                     >
                       <div className="px-6 pb-6">
-                        {module.type === 'video' && module.videoId && (
-                          <div className="rounded-xl overflow-hidden bg-black aspect-video">
-                            <iframe
-                              width="100%"
-                              height="100%"
-                              src={`https://www.youtube.com/embed/${module.videoId}?rel=0`}
-                              title={module.title}
-                              frameBorder="0"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                              allowFullScreen
-                              className="w-full h-full"
-                            />
+                        {module.type === 'video' && module.searchQuery && (
+                          <div className="space-y-4">
+                            {/* YouTube Search Embed */}
+                            <div className="rounded-xl overflow-hidden bg-card/50 border border-border">
+                              <div className="aspect-video relative">
+                                <iframe
+                                  width="100%"
+                                  height="100%"
+                                  src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(module.searchQuery)}`}
+                                  title={module.title}
+                                  frameBorder="0"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                  allowFullScreen
+                                  className="w-full h-full"
+                                />
+                              </div>
+                            </div>
+                            
+                            {/* YouTube Search Button */}
+                            <div className="flex items-center justify-between p-4 bg-card/30 rounded-xl border border-border">
+                              <div>
+                                <p className="font-medium">Search for more videos</p>
+                                <p className="text-sm text-muted-foreground">Find related tutorials on YouTube</p>
+                              </div>
+                              <Button 
+                                variant="outline" 
+                                onClick={() => openYouTubeSearch(module.searchQuery!)}
+                              >
+                                <ExternalLink className="w-4 h-4 mr-2" />
+                                Browse on YouTube
+                              </Button>
+                            </div>
                           </div>
                         )}
                         
                         {module.type === 'article' && module.articleContent && (
-                          <div className="bg-card/50 rounded-xl p-6 max-h-[500px] overflow-y-auto prose prose-invert prose-sm max-w-none">
-                            <div className="space-y-4">
+                          <div className="bg-card/50 rounded-xl p-6 max-h-[600px] overflow-y-auto border border-border">
+                            <div className="space-y-3">
                               {module.articleContent.split('\n').map((line, i) => {
-                                if (line.startsWith('# ')) {
-                                  return <h1 key={i} className="text-2xl font-bold text-foreground mt-4 mb-2">{line.replace('# ', '')}</h1>;
-                                } else if (line.startsWith('## ')) {
-                                  return <h2 key={i} className="text-xl font-semibold text-foreground mt-6 mb-2">{line.replace('## ', '')}</h2>;
-                                } else if (line.startsWith('### ')) {
-                                  return <h3 key={i} className="text-lg font-medium text-foreground mt-4 mb-2">{line.replace('### ', '')}</h3>;
-                                } else if (line.startsWith('- **')) {
-                                  const match = line.match(/- \*\*(.+?)\*\*: (.+)/);
+                                const trimmedLine = line.trim();
+                                if (!trimmedLine) return null;
+                                
+                                if (trimmedLine.startsWith('# ')) {
+                                  return <h1 key={i} className="text-2xl font-bold text-foreground mt-6 mb-3 first:mt-0">{trimmedLine.replace('# ', '')}</h1>;
+                                } else if (trimmedLine.startsWith('## ')) {
+                                  return <h2 key={i} className="text-xl font-semibold text-foreground mt-6 mb-2">{trimmedLine.replace('## ', '')}</h2>;
+                                } else if (trimmedLine.startsWith('### ')) {
+                                  return <h3 key={i} className="text-lg font-medium text-foreground mt-4 mb-2">{trimmedLine.replace('### ', '')}</h3>;
+                                } else if (trimmedLine.startsWith('```')) {
+                                  return <div key={i} className="bg-muted/50 rounded-lg p-4 font-mono text-sm my-4">{trimmedLine.replace(/```/g, '')}</div>;
+                                } else if (trimmedLine.startsWith('|')) {
+                                  return <div key={i} className="font-mono text-sm text-muted-foreground bg-muted/30 px-2 py-1">{trimmedLine}</div>;
+                                } else if (trimmedLine.startsWith('- ✅') || trimmedLine.startsWith('- ❌')) {
+                                  return <p key={i} className="text-muted-foreground ml-4 py-0.5">{trimmedLine.replace('- ', '')}</p>;
+                                } else if (trimmedLine.startsWith('- **')) {
+                                  const match = trimmedLine.match(/- \*\*(.+?)\*\*:?\s*(.*)/)
                                   if (match) {
                                     return (
-                                      <div key={i} className="flex gap-2 text-muted-foreground ml-4">
+                                      <div key={i} className="flex gap-2 text-muted-foreground ml-4 py-0.5">
                                         <span className="text-primary">•</span>
-                                        <span><strong className="text-foreground">{match[1]}</strong>: {match[2]}</span>
+                                        <span><strong className="text-foreground">{match[1]}</strong>{match[2] ? `: ${match[2]}` : ''}</span>
                                       </div>
                                     );
                                   }
-                                  return <p key={i} className="text-muted-foreground ml-4">{line.replace('- ', '• ')}</p>;
-                                } else if (line.startsWith('- ')) {
-                                  return <p key={i} className="text-muted-foreground ml-4 flex gap-2"><span className="text-primary">•</span>{line.replace('- ', '')}</p>;
-                                } else if (line.match(/^\d+\./)) {
-                                  return <p key={i} className="text-muted-foreground ml-4">{line}</p>;
-                                } else if (line.trim()) {
-                                  return <p key={i} className="text-muted-foreground leading-relaxed">{line}</p>;
+                                } else if (trimmedLine.startsWith('- ')) {
+                                  return <p key={i} className="text-muted-foreground ml-4 flex gap-2 py-0.5"><span className="text-primary">•</span>{trimmedLine.replace('- ', '')}</p>;
+                                } else if (trimmedLine.match(/^\d+\./)) {
+                                  return <p key={i} className="text-muted-foreground ml-4 py-0.5">{trimmedLine}</p>;
+                                } else {
+                                  return <p key={i} className="text-muted-foreground leading-relaxed">{trimmedLine}</p>;
                                 }
                                 return null;
                               })}
