@@ -285,8 +285,8 @@ Continue to the next module to build upon what you've learned here. Remember to 
   `;
 };
 
-const generateModules = (topic: string): LearningModule[] => {
-  return [
+const generateModules = (topic: string, format: string = 'mixed'): LearningModule[] => {
+  const allModules: LearningModule[] = [
     { 
       id: 1, 
       title: `Introduction to ${topic}`, 
@@ -328,7 +328,7 @@ const generateModules = (topic: string): LearningModule[] => {
     },
     { 
       id: 6, 
-      title: 'Best Practices & Patterns', 
+      title: `Best Practices & Patterns for ${topic}`, 
       type: 'article', 
       duration: '15 min', 
       completed: false,
@@ -336,7 +336,7 @@ const generateModules = (topic: string): LearningModule[] => {
     },
     { 
       id: 7, 
-      title: 'Advanced Techniques', 
+      title: `Advanced ${topic} Techniques`, 
       type: 'video', 
       duration: '25 min', 
       completed: false,
@@ -350,6 +350,46 @@ const generateModules = (topic: string): LearningModule[] => {
       completed: false 
     },
   ];
+
+  if (format === 'videos') {
+    // Replace articles with video modules
+    return allModules.map((m, i) => {
+      if (m.type === 'article') {
+        const videoTopics = [
+          { title: `Deep Dive into ${topic} Concepts`, queryType: 'introduction' },
+          { title: `${topic} Tips & Tricks`, queryType: 'advanced' },
+        ];
+        const replacement = videoTopics[i % videoTopics.length];
+        return {
+          ...m,
+          type: 'video' as const,
+          title: replacement.title,
+          searchQuery: getVideoSearchQuery(topic, replacement.queryType),
+          articleContent: undefined,
+        };
+      }
+      return m;
+    });
+  }
+
+  if (format === 'articles') {
+    // Replace videos with article modules
+    return allModules.map((m) => {
+      if (m.type === 'video') {
+        return {
+          ...m,
+          type: 'article' as const,
+          title: m.title,
+          articleContent: generateArticleContent(topic, m.title),
+          searchQuery: undefined,
+        };
+      }
+      return m;
+    });
+  }
+
+  // 'mixed' — return as-is
+  return allModules;
 };
 
 export function LearningPathView() {
@@ -373,7 +413,7 @@ export function LearningPathView() {
 
   useEffect(() => {
     if (pathData) {
-      const generatedModules = generateModules(pathData.topic);
+      const generatedModules = generateModules(pathData.topic, pathData.format);
       
       if (pathData.pathId) {
         const existingPath = getPathById(pathData.pathId);
@@ -634,7 +674,7 @@ export function LearningPathView() {
                                 <iframe
                                   width="100%"
                                   height="100%"
-                                  src={`https://www.youtube.com/embed/videoseries?list=PLillGF-RfqbYeckUaD1z6nviTp31GLTH8&autoplay=0`}
+                                  src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(module.searchQuery)}&autoplay=0`}
                                   title={module.title}
                                   frameBorder="0"
                                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
