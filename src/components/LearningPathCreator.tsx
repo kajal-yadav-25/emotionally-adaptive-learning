@@ -42,9 +42,9 @@ const steps = [
 ];
 
 const speedOptions = [
-  { value: 'slow', label: 'Relaxed', desc: 'Take your time, deep understanding', icon: '🐢' },
-  { value: 'moderate', label: 'Balanced', desc: 'Steady progress, good retention', icon: '🚶' },
-  { value: 'fast', label: 'Intensive', desc: 'Quick learning, high focus', icon: '🚀' },
+  { value: 'slow', label: 'Relaxed', desc: 'Take your time, deep understanding', icon: Gauge, color: 'from-blue-400 to-cyan-400', animDuration: 4 },
+  { value: 'moderate', label: 'Balanced', desc: 'Steady progress, good retention', icon: Zap, color: 'from-yellow-400 to-orange-400', animDuration: 2.5 },
+  { value: 'fast', label: 'Intensive', desc: 'Quick learning, high focus', icon: ArrowRight, color: 'from-red-400 to-rose-500', animDuration: 1.2 },
 ];
 
 const formatOptions = [
@@ -585,38 +585,66 @@ export function LearningPathCreator() {
                     <h2 className="font-display text-3xl font-bold mb-2">Learning Speed</h2>
                     <p className="text-muted-foreground">Choose a pace that matches your availability</p>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {speedOptions.map((option, i) => (
                       <motion.button
                         key={option.value}
-                        initial={{ opacity: 0, x: -20 }}
+                        initial={{ opacity: 0, x: -30 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        whileHover={{ scale: 1.02, x: 8 }}
-                        whileTap={{ scale: 0.98 }}
+                        transition={{ delay: i * 0.12, type: 'spring', stiffness: 200 }}
+                        whileHover={{ scale: 1.03, x: 10 }}
+                        whileTap={{ scale: 0.97 }}
                         onClick={() => setData({ ...data, speed: option.value as LearningSpeed })}
                         className={cn(
-                          'w-full p-5 rounded-2xl border flex items-center gap-4 transition-all duration-300 text-left relative overflow-hidden',
+                          'w-full p-5 rounded-2xl border flex items-center gap-5 transition-all duration-300 text-left relative overflow-hidden',
                           data.speed === option.value
-                            ? `bg-gradient-to-r ${moodColors.gradient} border-transparent shadow-lg`
+                            ? `bg-gradient-to-r ${option.color} border-transparent shadow-lg`
                             : 'bg-secondary/30 border-border/50 hover:bg-secondary/50'
                         )}
                       >
+                        {/* Animated pulse bg for selected */}
                         {data.speed === option.value && (
                           <motion.div
-                            className="absolute right-4 top-1/2 -translate-y-1/2"
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ type: 'spring', stiffness: 400 }}
-                          >
-                            <CheckCircle2 className="w-5 h-5 text-foreground/80" />
-                          </motion.div>
+                            className="absolute inset-0 bg-white/10"
+                            animate={{ opacity: [0, 0.15, 0] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                          />
                         )}
-                        <span className="text-3xl">{option.icon}</span>
-                        <div>
-                          <span className="font-semibold block">{option.label}</span>
+                        {/* Icon with speed-based animation */}
+                        <motion.div
+                          className={cn(
+                            'w-14 h-14 rounded-xl flex items-center justify-center shrink-0',
+                            data.speed === option.value
+                              ? 'bg-white/20'
+                              : `bg-gradient-to-br ${option.color} opacity-80`
+                          )}
+                          animate={data.speed === option.value ? { 
+                            scale: [1, 1.15, 1],
+                          } : {}}
+                          transition={{ duration: option.animDuration, repeat: Infinity, ease: 'easeInOut' }}
+                        >
+                          <option.icon className="w-7 h-7 text-foreground" />
+                        </motion.div>
+                        <div className="flex-1">
+                          <span className="font-semibold block text-lg">{option.label}</span>
                           <span className="text-sm text-muted-foreground">{option.desc}</span>
                         </div>
+                        {data.speed === option.value && (
+                          <motion.div
+                            initial={{ scale: 0, rotate: -90 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            transition={{ type: 'spring', stiffness: 400 }}
+                          >
+                            <CheckCircle2 className="w-6 h-6 text-foreground/90" />
+                          </motion.div>
+                        )}
+                        {/* Speed indicator bar */}
+                        <motion.div
+                          className={`absolute bottom-0 left-0 h-1 bg-gradient-to-r ${option.color}`}
+                          initial={{ width: '0%' }}
+                          animate={{ width: data.speed === option.value ? '100%' : '0%' }}
+                          transition={{ duration: 0.5, ease: 'easeOut' }}
+                        />
                       </motion.button>
                     ))}
                   </div>

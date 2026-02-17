@@ -1,10 +1,12 @@
 import { LandingHero } from '@/components/LandingHero';
 import { motion } from 'framer-motion';
 import { useMood } from '@/contexts/MoodContext';
+import { useNavigate } from 'react-router-dom';
 import { Brain, Zap, LineChart, Users, Sparkles, Shield } from 'lucide-react';
 
 const Index = () => {
   const { moodColors } = useMood();
+  const navigate = useNavigate();
 
   const features = [
     {
@@ -44,7 +46,7 @@ const Index = () => {
       <LandingHero />
 
       {/* Features Section */}
-      <section className="py-24 relative">
+      <section id="features-section" className="py-24 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-background via-card/50 to-background" />
         
         <div className="relative container mx-auto px-6">
@@ -105,7 +107,7 @@ const Index = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className={`px-8 py-4 rounded-xl bg-gradient-to-r ${moodColors.gradient} font-semibold text-lg shadow-lg transition-all`}
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            onClick={() => navigate('/create-path')}
           >
             Start Your Journey
           </motion.button>
