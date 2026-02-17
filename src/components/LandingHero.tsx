@@ -1,13 +1,16 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Brain, Sparkles, Zap, Heart } from 'lucide-react';
+import { Brain, Sparkles, Zap, Heart, BookOpen, Target, TrendingUp, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useMood } from '@/contexts/MoodContext';
-import { MoodSelector } from './MoodSelector';
 
 export function LandingHero() {
   const navigate = useNavigate();
   const { moodColors } = useMood();
+
+  const scrollToFeatures = () => {
+    document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -52,28 +55,17 @@ export function LandingHero() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto"
+            className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto"
           >
             Experience personalized learning paths that adapt to your mood, 
             energy levels, and emotional state for maximum retention.
           </motion.p>
 
-          {/* Mood Selector */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="mb-10"
-          >
-            <p className="text-sm text-muted-foreground mb-4">How are you feeling right now?</p>
-            <MoodSelector />
-          </motion.div>
-
           {/* CTA Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
             <Button 
@@ -85,37 +77,67 @@ export function LandingHero() {
               <Zap className="w-5 h-5 group-hover:animate-pulse" />
               Create Learning Path
             </Button>
-            <Button variant="glass" size="xl">
+            <Button variant="glass" size="xl" onClick={scrollToFeatures}>
               Learn More
             </Button>
           </motion.div>
 
-          {/* Features Preview */}
+          {/* About Section - Key Stats */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.6 }}
-            className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-6"
+            transition={{ duration: 0.7, delay: 0.5 }}
+            className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-4"
           >
             {[
-              { icon: Brain, title: 'Emotion Detection', desc: 'AI understands your current state' },
-              { icon: Zap, title: 'Adaptive Content', desc: 'Content adjusts to your energy' },
-              { icon: Heart, title: 'Personalized Pace', desc: 'Learn at your natural rhythm' },
-            ].map((feature, i) => (
+              { value: '5', label: 'Mood Modes', icon: Brain },
+              { value: '3', label: 'Learning Speeds', icon: TrendingUp },
+              { value: '3', label: 'Content Formats', icon: BookOpen },
+              { value: '100%', label: 'Personalized', icon: Target },
+            ].map((stat, i) => (
               <motion.div
-                key={feature.title}
+                key={stat.label}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.7 + i * 0.1 }}
-                className="glass-card rounded-2xl p-6 text-left hover:border-primary/30 transition-colors"
+                transition={{ duration: 0.5, delay: 0.6 + i * 0.1 }}
+                className="glass-card rounded-2xl p-5 text-center hover:border-primary/30 transition-colors"
               >
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${moodColors.gradient} flex items-center justify-center mb-4`}>
-                  <feature.icon className="w-6 h-6 text-foreground" />
-                </div>
-                <h3 className="font-display font-semibold text-lg mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground text-sm">{feature.desc}</p>
+                <stat.icon className={`w-6 h-6 mx-auto mb-2 text-primary`} />
+                <p className="font-display text-2xl font-bold">{stat.value}</p>
+                <p className="text-muted-foreground text-xs">{stat.label}</p>
               </motion.div>
             ))}
+          </motion.div>
+
+          {/* How It Works */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.8 }}
+            className="mt-16"
+          >
+            <h3 className="font-display text-2xl font-semibold mb-8 text-muted-foreground">How It Works</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                { icon: Heart, title: '1. Share Your Mood', desc: 'Tell us how you feel or let our AI detect your emotional state via camera & mic.' },
+                { icon: Zap, title: '2. Get Adaptive Content', desc: 'Receive a personalized curriculum with videos, articles, or both — tuned to your energy.' },
+                { icon: Shield, title: '3. Learn & Track', desc: 'Progress through modules at your own pace with real-time progress tracking.' },
+              ].map((feature, i) => (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.9 + i * 0.1 }}
+                  className="glass-card rounded-2xl p-6 text-left hover:border-primary/30 transition-colors"
+                >
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${moodColors.gradient} flex items-center justify-center mb-4`}>
+                    <feature.icon className="w-6 h-6 text-foreground" />
+                  </div>
+                  <h3 className="font-display font-semibold text-lg mb-2">{feature.title}</h3>
+                  <p className="text-muted-foreground text-sm">{feature.desc}</p>
+                </motion.div>
+              ))}
+            </div>
           </motion.div>
         </div>
       </div>
