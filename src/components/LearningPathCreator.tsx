@@ -17,11 +17,13 @@ import {
   Camera,
   CameraOff,
   Mic,
-  MicOff
+  MicOff,
+  Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 type LearningSpeed = 'slow' | 'moderate' | 'fast';
 type ContentFormat = 'videos' | 'articles' | 'mixed';
@@ -115,6 +117,7 @@ export function LearningPathCreator() {
 
   // Camera & Mic state
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [cameraOn, setCameraOn] = useState(false);
   const [micOn, setMicOn] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -122,13 +125,29 @@ export function LearningPathCreator() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animFrameRef = useRef<number | null>(null);
 
+  // AI Emotion Detection state
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [detectedEmotion, setDetectedEmotion] = useState<{
+    mood: MoodType;
+    confidence: number;
+    suggestedDifficulty: 'easy' | 'medium' | 'moderate' | 'hard';
+    details: string;
+    source: 'face' | 'voice';
+  } | null>(null);
+  const faceDetectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioLevelHistoryRef = useRef<number[]>([]);
+
   const stopStream = useCallback(() => {
     if (stream) {
       stream.getTracks().forEach(t => t.stop());
       setStream(null);
     }
-    if (animFrameRef.current) {
-      cancelAnimationFrame(animFrameRef.current);
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    if (faceDetectIntervalRef.current) clearInterval(faceDetectIntervalRef.current);
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
     }
     setCameraOn(false);
     setMicOn(false);
@@ -140,8 +159,127 @@ export function LearningPathCreator() {
     return () => {
       if (stream) stream.getTracks().forEach(t => t.stop());
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      if (faceDetectIntervalRef.current) clearInterval(faceDetectIntervalRef.current);
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
     };
   }, [stream]);
+
+  // ──── AI Face Emotion Detection ────
+  const captureFrameAndDetect = useCallback(async () => {
+    if (!videoRef.current || !cameraOn || isDetecting) return;
+    const video = videoRef.current;
+    if (video.readyState < 2) return;
+
+    // Draw frame to canvas
+    const canvas = canvasRef.current || document.createElement('canvas');
+    canvas.width = 320;
+    canvas.height = 240;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, 320, 240);
+
+    const imageBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+    setIsDetecting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('detect-face-emotion', {
+        body: { imageBase64 },
+      });
+
+      if (error) throw error;
+      if (data && !data.error && data.faceDetected !== false) {
+        const result = data as { mood: MoodType; confidence: number; suggestedDifficulty: 'easy' | 'medium' | 'moderate' | 'hard'; emotionDetails: string };
+        setDetectedEmotion({
+          mood: result.mood,
+          confidence: result.confidence,
+          suggestedDifficulty: result.suggestedDifficulty,
+          details: result.emotionDetails,
+          source: 'face',
+        });
+        // Auto-apply detected mood
+        setMood(result.mood);
+        setData(prev => ({ ...prev, mood: result.mood }));
+        toast.success(`😊 Mood detected: ${result.mood}`, {
+          description: `Confidence: ${Math.round(result.confidence * 100)}% • ${result.emotionDetails}`,
+        });
+      }
+    } catch (err) {
+      console.error('Face emotion detection error:', err);
+    } finally {
+      setIsDetecting(false);
+    }
+  }, [cameraOn, isDetecting, setMood]);
+
+  // ──── AI Voice Emotion Detection (using audio features) ────
+  const analyzeVoiceEmotion = useCallback(async () => {
+    if (audioLevelHistoryRef.current.length < 10) return;
+
+    const history = audioLevelHistoryRef.current;
+    const avgLevel = history.reduce((a, b) => a + b, 0) / history.length;
+    const maxLevel = Math.max(...history);
+    const mean = avgLevel;
+    const variance = history.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / history.length;
+
+    // Reset history for next window
+    audioLevelHistoryRef.current = [];
+
+    try {
+      const { data, error } = await supabase.functions.invoke('detect-voice-emotion', {
+        body: { audioFeatures: { avgLevel, maxLevel, variance } },
+      });
+
+      if (error) throw error;
+      if (data && !data.error) {
+        const result = data as { mood: MoodType; confidence: number; suggestedDifficulty: 'easy' | 'medium' | 'moderate' | 'hard'; voiceTone: string };
+        // Only update if not already detected by face (face takes priority)
+        if (!detectedEmotion || detectedEmotion.source === 'voice') {
+          setDetectedEmotion({
+            mood: result.mood,
+            confidence: result.confidence,
+            suggestedDifficulty: result.suggestedDifficulty,
+            details: result.voiceTone,
+            source: 'voice',
+          });
+          setMood(result.mood);
+          setData(prev => ({ ...prev, mood: result.mood }));
+          toast.success(`🎤 Voice mood detected: ${result.mood}`, {
+            description: `${result.voiceTone}`,
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Voice emotion detection error:', err);
+    }
+  }, [detectedEmotion, setMood]);
+
+  // Start periodic face capture when camera is on
+  useEffect(() => {
+    if (cameraOn) {
+      // Capture after 3 seconds to let camera stabilize, then every 8 seconds
+      const initialTimeout = setTimeout(() => {
+        captureFrameAndDetect();
+        faceDetectIntervalRef.current = setInterval(captureFrameAndDetect, 8000);
+      }, 3000);
+      return () => {
+        clearTimeout(initialTimeout);
+        if (faceDetectIntervalRef.current) clearInterval(faceDetectIntervalRef.current);
+      };
+    } else {
+      if (faceDetectIntervalRef.current) {
+        clearInterval(faceDetectIntervalRef.current);
+        faceDetectIntervalRef.current = null;
+      }
+    }
+  }, [cameraOn, captureFrameAndDetect]);
+
+  // Analyze voice emotion every 5 seconds while mic is on
+  useEffect(() => {
+    if (!micOn) return;
+    const interval = setInterval(analyzeVoiceEmotion, 5000);
+    return () => clearInterval(interval);
+  }, [micOn, analyzeVoiceEmotion]);
 
   const toggleCamera = async () => {
     if (cameraOn) {
@@ -170,8 +308,12 @@ export function LearningPathCreator() {
         stream.getAudioTracks().forEach(t => t.stop());
       }
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
       setMicOn(false);
       setAudioLevel(0);
+      audioLevelHistoryRef.current = [];
       return;
     }
     try {
@@ -184,7 +326,7 @@ export function LearningPathCreator() {
       }
       setMicOn(true);
 
-      // Audio level visualization
+      // Audio level visualization + history tracking for AI
       const audioCtx = new AudioContext();
       const source = audioCtx.createMediaStreamSource(audioStream);
       const analyser = audioCtx.createAnalyser();
@@ -196,12 +338,19 @@ export function LearningPathCreator() {
       const updateLevel = () => {
         analyser.getByteFrequencyData(dataArray);
         const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-        setAudioLevel(avg / 255);
+        const normalized = avg / 255;
+        setAudioLevel(normalized);
+        // Collect samples for AI voice analysis
+        audioLevelHistoryRef.current.push(normalized);
+        // Keep rolling window of last 50 samples
+        if (audioLevelHistoryRef.current.length > 50) {
+          audioLevelHistoryRef.current.shift();
+        }
         animFrameRef.current = requestAnimationFrame(updateLevel);
       };
       updateLevel();
 
-      toast.success('Microphone activated!', { description: 'Listening to your tone.' });
+      toast.success('Microphone activated!', { description: 'Listening to your voice tone for mood detection.' });
     } catch {
       toast.error('Microphone access denied');
     }
@@ -248,7 +397,15 @@ export function LearningPathCreator() {
         description: `Your personalized ${data.topic} learning path is ready.`
       });
       setIsGenerating(false);
-      navigate('/learning-path', { state: { ...data, goal: `Learn ${data.topic}` } });
+      navigate('/learning-path', { 
+        state: { 
+          ...data, 
+          goal: `Learn ${data.topic}`,
+          // Pass AI-detected difficulty suggestion so learning path can use it
+          suggestedDifficulty: detectedEmotion?.suggestedDifficulty || null,
+          emotionSource: detectedEmotion?.source || null,
+        } 
+      });
     }, 2000);
   };
 
@@ -490,6 +647,8 @@ export function LearningPathCreator() {
                             className="w-full h-full object-cover rounded-xl mirror"
                             style={{ transform: 'scaleX(-1)' }}
                           />
+                          {/* Hidden canvas for frame capture */}
+                          <canvas ref={canvasRef} className="hidden" />
                           {/* Scanning overlay */}
                           <motion.div
                             className={`absolute inset-0 bg-gradient-to-b from-transparent via-primary/10 to-transparent`}
@@ -497,8 +656,24 @@ export function LearningPathCreator() {
                             transition={{ duration: 2.5, repeat: Infinity, ease: 'linear' }}
                           />
                           <div className="absolute bottom-2 left-2 right-2 flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            <span className="text-xs text-foreground/80">Analyzing expressions...</span>
+                            {isDetecting ? (
+                              <>
+                                <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                                <span className="text-xs text-foreground/80">Detecting emotion via AI...</span>
+                              </>
+                            ) : detectedEmotion?.source === 'face' ? (
+                              <>
+                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                <span className="text-xs text-foreground/80">
+                                  {moodConfig[detectedEmotion.mood].emoji} {detectedEmotion.mood} ({Math.round(detectedEmotion.confidence * 100)}% confidence)
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+                                <span className="text-xs text-foreground/80">Analyzing expressions...</span>
+                              </>
+                            )}
                           </div>
                         </motion.div>
                       )}
@@ -527,11 +702,34 @@ export function LearningPathCreator() {
                       )}
                     </AnimatePresence>
 
+                    {/* AI Detection Result Banner */}
+                    <AnimatePresence>
+                      {detectedEmotion && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          className={`rounded-xl p-3 mt-2 bg-gradient-to-r ${moodConfig[detectedEmotion.mood].gradient} opacity-90`}
+                        >
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-medium text-foreground">
+                              {detectedEmotion.source === 'face' ? '👁️ Face' : '🎤 Voice'} detection → {moodConfig[detectedEmotion.mood].emoji} <strong>{detectedEmotion.mood}</strong>
+                            </span>
+                            <span className="bg-background/30 px-2 py-0.5 rounded-full text-foreground font-semibold capitalize">
+                              {detectedEmotion.suggestedDifficulty}
+                            </span>
+                          </div>
+                          <p className="text-xs text-foreground/70 mt-1">{detectedEmotion.details}</p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
                     {!cameraOn && !micOn && (
                       <p className="text-xs text-muted-foreground text-center py-2">
                         Enable camera or mic for AI emotion detection, or select manually below
                       </p>
                     )}
+
                   </motion.div>
 
                   {/* Mood Grid */}
