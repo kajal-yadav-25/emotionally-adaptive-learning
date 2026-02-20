@@ -55,21 +55,40 @@ const formatOptions = [
   { value: 'mixed', label: 'Mixed', desc: 'Best of both worlds', icon: Sparkles },
 ];
 
-// Floating particle component
+// Floating particle component - dynamically adapts to mood
 function FloatingParticles({ mood }: { mood: MoodType }) {
   const config = moodConfig[mood];
+  const particleColorMap: Record<MoodType, string> = {
+    energetic: 'bg-orange-400',
+    calm: 'bg-blue-400',
+    focused: 'bg-green-400',
+    creative: 'bg-purple-400',
+    motivated: 'bg-rose-400',
+    sad: 'bg-slate-400',
+    anxious: 'bg-amber-400',
+    bored: 'bg-teal-300',
+    unmotivated: 'bg-red-800',
+    curious: 'bg-yellow-400',
+  };
+
+  // Different particle shapes based on mood
+  const particleShape = ['sad', 'unmotivated', 'bored'].includes(mood) 
+    ? 'rounded-full opacity-20' 
+    : ['anxious'].includes(mood)
+      ? 'rounded-sm opacity-50 rotate-45'
+      : ['creative', 'curious'].includes(mood)
+        ? 'rounded-full opacity-60'
+        : 'rounded-full opacity-40';
+
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      {Array.from({ length: 20 }).map((_, i) => (
+      {Array.from({ length: config.particleCount }).map((_, i) => (
         <motion.div
-          key={i}
+          key={`${mood}-${i}`}
           className={cn(
-            'absolute w-1.5 h-1.5 rounded-full opacity-40',
-            mood === 'energetic' && 'bg-orange-400',
-            mood === 'calm' && 'bg-blue-400',
-            mood === 'focused' && 'bg-green-400',
-            mood === 'creative' && 'bg-purple-400',
-            mood === 'motivated' && 'bg-rose-400',
+            'absolute w-1.5 h-1.5',
+            particleShape,
+            particleColorMap[mood],
           )}
           initial={{
             x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000),
@@ -87,11 +106,17 @@ function FloatingParticles({ mood }: { mood: MoodType }) {
               Math.random() * 600,
               Math.random() * 300,
             ],
-            opacity: [0.2, 0.6, 0.2],
-            scale: [0.5, 1.2, 0.5],
+            opacity: config.animationIntensity === 'high' 
+              ? [0.3, 0.7, 0.3] 
+              : config.animationIntensity === 'medium' 
+                ? [0.2, 0.5, 0.2] 
+                : [0.1, 0.25, 0.1],
+            scale: config.animationIntensity === 'high'
+              ? [0.5, 1.5, 0.5]
+              : [0.5, 1, 0.5],
           }}
           transition={{
-            duration: 8 + Math.random() * 6,
+            duration: config.particleSpeed + Math.random() * 6,
             repeat: Infinity,
             ease: 'easeInOut',
             delay: Math.random() * 3,
@@ -100,6 +125,33 @@ function FloatingParticles({ mood }: { mood: MoodType }) {
       ))}
     </div>
   );
+}
+
+// Background pattern component based on mood
+function MoodBackground({ mood }: { mood: MoodType }) {
+  const config = moodConfig[mood];
+  
+  if (config.bgPattern === 'grid') {
+    return (
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px]" />
+    );
+  }
+  if (config.bgPattern === 'dots') {
+    return (
+      <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:32px_32px]" />
+    );
+  }
+  if (config.bgPattern === 'waves') {
+    return (
+      <motion.div 
+        className="absolute inset-0 opacity-[0.03]"
+        style={{ background: 'repeating-linear-gradient(45deg, currentColor 0px, currentColor 1px, transparent 1px, transparent 12px)' }}
+        animate={{ backgroundPosition: ['0px 0px', '24px 24px'] }}
+        transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+      />
+    );
+  }
+  return null;
 }
 
 export function LearningPathCreator() {
@@ -257,11 +309,11 @@ export function LearningPathCreator() {
   // Start periodic face capture when camera is on
   useEffect(() => {
     if (cameraOn) {
-      // Capture after 3 seconds to let camera stabilize, then every 8 seconds
+      // Capture after 4 seconds to let camera stabilize, then every 15 seconds
       const initialTimeout = setTimeout(() => {
         captureFrameAndDetect();
-        faceDetectIntervalRef.current = setInterval(captureFrameAndDetect, 8000);
-      }, 3000);
+        faceDetectIntervalRef.current = setInterval(captureFrameAndDetect, 15000);
+      }, 4000);
       return () => {
         clearTimeout(initialTimeout);
         if (faceDetectIntervalRef.current) clearInterval(faceDetectIntervalRef.current);
@@ -274,10 +326,10 @@ export function LearningPathCreator() {
     }
   }, [cameraOn, captureFrameAndDetect]);
 
-  // Analyze voice emotion every 5 seconds while mic is on
+  // Analyze voice emotion every 10 seconds while mic is on
   useEffect(() => {
     if (!micOn) return;
-    const interval = setInterval(analyzeVoiceEmotion, 5000);
+    const interval = setInterval(analyzeVoiceEmotion, 10000);
     return () => clearInterval(interval);
   }, [micOn, analyzeVoiceEmotion]);
 
@@ -421,21 +473,30 @@ export function LearningPathCreator() {
         <motion.div
           className={`absolute top-1/4 right-1/4 w-96 h-96 bg-gradient-to-r ${moodColors.gradient} rounded-full blur-3xl`}
           animate={{
-            opacity: [0.15, 0.3, 0.15],
-            scale: [1, 1.2, 1],
-            rotate: [0, 180, 360],
+            opacity: moodColors.animationIntensity === 'high' ? [0.2, 0.4, 0.2] : [0.08, 0.18, 0.08],
+            scale: moodColors.animationIntensity === 'high' ? [1, 1.3, 1] : [1, 1.1, 1],
+            rotate: moodColors.animationIntensity === 'low' ? [0, 90, 0] : [0, 180, 360],
           }}
-          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ 
+            duration: moodColors.animationIntensity === 'high' ? 8 : 16, 
+            repeat: Infinity, 
+            ease: 'easeInOut' 
+          }}
         />
         <motion.div
           className={`absolute bottom-1/4 left-1/4 w-72 h-72 bg-gradient-to-l ${moodColors.gradient} rounded-full blur-3xl`}
           animate={{
-            opacity: [0.1, 0.25, 0.1],
+            opacity: moodColors.animationIntensity === 'high' ? [0.15, 0.3, 0.15] : [0.05, 0.12, 0.05],
             scale: [1.1, 0.9, 1.1],
-            x: [-20, 20, -20],
+            x: moodColors.animationIntensity === 'high' ? [-30, 30, -30] : [-10, 10, -10],
           }}
-          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ 
+            duration: moodColors.animationIntensity === 'high' ? 7 : 14, 
+            repeat: Infinity, 
+            ease: 'easeInOut' 
+          }}
         />
+        <MoodBackground mood={data.mood} />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:64px_64px]" />
       </div>
 
@@ -733,7 +794,7 @@ export function LearningPathCreator() {
                   </motion.div>
 
                   {/* Mood Grid */}
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     {moods.map(([moodType, config], i) => (
                       <motion.button
                         key={moodType}

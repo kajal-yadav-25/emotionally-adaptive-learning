@@ -96,6 +96,36 @@
     --ring: 340 80% 55%;
     --accent: 340 80% 20%;
   }
+
+  .mood-sad {
+    --primary: 220 40% 40%;
+    --ring: 220 40% 40%;
+    --accent: 220 40% 16%;
+  }
+
+  .mood-anxious {
+    --primary: 45 90% 50%;
+    --ring: 45 90% 50%;
+    --accent: 45 90% 20%;
+  }
+
+  .mood-bored {
+    --primary: 180 50% 45%;
+    --ring: 180 50% 45%;
+    --accent: 180 50% 18%;
+  }
+
+  .mood-unmotivated {
+    --primary: 0 50% 45%;
+    --ring: 0 50% 45%;
+    --accent: 0 50% 18%;
+  }
+
+  .mood-curious {
+    --primary: 50 85% 55%;
+    --ring: 50 85% 55%;
+    --accent: 50 85% 20%;
+  }
 }
 
 @layer base {

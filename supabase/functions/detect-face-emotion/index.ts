@@ -52,7 +52,7 @@ serve(async (req) => {
                 
 Return ONLY a valid JSON object (no markdown, no explanation) in exactly this format:
 {
-  "mood": "energetic|calm|focused|creative|motivated",
+  "mood": "energetic|calm|focused|creative|motivated|sad|anxious|bored|unmotivated|curious",
   "confidence": 0.0-1.0,
   "suggestedDifficulty": "easy|medium|moderate|hard",
   "emotionDetails": "brief description of detected expression",
@@ -60,17 +60,22 @@ Return ONLY a valid JSON object (no markdown, no explanation) in exactly this fo
 }
 
 Mood mapping rules:
-- Happy, excited, enthusiastic → "energetic"
-- Relaxed, peaceful, serene → "calm"
-- Concentrated, serious, determined → "focused"
-- Curious, playful, expressive → "creative"
-- Confident, alert, ready → "motivated"
+- Happy, excited, enthusiastic, big smile → "energetic"
+- Relaxed, peaceful, serene, gentle smile → "calm"
+- Concentrated, serious, determined, furrowed brow → "focused"
+- Curious, playful, expressive, raised eyebrows → "creative"
+- Confident, alert, ready, strong posture → "motivated"
+- Downcast eyes, frown, drooping, teary → "sad"
+- Wide eyes, tense jaw, worried look, restless → "anxious"
+- Blank stare, disinterested, yawning, flat expression → "bored"
+- Slouched, apathetic, tired but not sad, low energy → "unmotivated"
+- Tilted head, squinting, leaning in, thoughtful → "curious"
 
 Difficulty mapping based on mood and energy:
-- Very calm/sad/tired → "easy" (lower cognitive load)
-- Relaxed/neutral → "medium"
-- Focused/curious → "moderate"
-- Energetic/excited/motivated → "hard" (can handle more challenge)
+- Sad/unmotivated/tired → "easy" (lower cognitive load, small wins)
+- Calm/bored/relaxed → "medium" (gentle engagement)
+- Focused/curious/creative → "moderate" (balanced challenge)
+- Energetic/excited/motivated/anxious → "hard" (channel energy into challenge)
 
 If no face is detected, return faceDetected: false with reasonable defaults.`,
               },
