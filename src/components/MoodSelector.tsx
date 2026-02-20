@@ -1,6 +1,8 @@
 import { useMood, MoodType, moodConfig } from '@/contexts/MoodContext';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { useState } from 'react';
 
 interface MoodSelectorProps {
   className?: string;
@@ -9,37 +11,69 @@ interface MoodSelectorProps {
 
 export function MoodSelector({ className, size = 'md' }: MoodSelectorProps) {
   const { mood, setMood, moodColors } = useMood();
+  const [textInput, setTextInput] = useState('');
 
   const moods = Object.entries(moodConfig) as [MoodType, typeof moodColors][];
+  const allMoodNames = Object.keys(moodConfig) as MoodType[];
+
+  const handleTextSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const normalized = textInput.trim().toLowerCase() as MoodType;
+    if (allMoodNames.includes(normalized)) {
+      setMood(normalized);
+      setTextInput('');
+    }
+  };
 
   const sizeClasses = {
-    sm: 'p-2 text-lg',
-    md: 'p-3 text-2xl',
-    lg: 'p-4 text-3xl'
+    sm: 'p-2 text-sm',
+    md: 'px-4 py-3 text-base',
+    lg: 'px-5 py-4 text-lg'
   };
 
   return (
-    <div className={cn('flex flex-wrap gap-3 justify-center', className)}>
-      {moods.map(([moodType, config]) => (
+    <div className={cn('flex flex-col gap-5', className)}>
+      {/* Text input for manual emotion entry */}
+      <form onSubmit={handleTextSubmit} className="flex gap-2 items-center justify-center">
+        <Input
+          value={textInput}
+          onChange={(e) => setTextInput(e.target.value)}
+          placeholder="Type your emotion (e.g. calm, anxious, curious...)"
+          className="max-w-xs bg-secondary/50 border-secondary text-foreground placeholder:text-muted-foreground"
+        />
         <motion.button
-          key={moodType}
-          whileHover={{ scale: 1.1 }}
+          type="submit"
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => setMood(moodType)}
-          className={cn(
-            'rounded-xl transition-all duration-300 flex flex-col items-center gap-1',
-            sizeClasses[size],
-            mood === moodType
-              ? `bg-gradient-to-br ${config.gradient} shadow-lg ${config.glow}`
-              : 'bg-secondary/50 hover:bg-secondary'
-          )}
+          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium"
         >
-          <span className="filter drop-shadow-lg">{config.emoji}</span>
-          {size !== 'sm' && (
-            <span className="text-xs font-medium text-foreground/80">{config.label}</span>
-          )}
+          Set
         </motion.button>
-      ))}
+      </form>
+
+      {/* Mood buttons in [emoji label] format */}
+      <div className="flex flex-wrap gap-3 justify-center">
+        {moods.map(([moodType, config]) => (
+          <motion.button
+            key={moodType}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setMood(moodType)}
+            className={cn(
+              'rounded-xl transition-all duration-300 flex items-center gap-2',
+              sizeClasses[size],
+              mood === moodType
+                ? `bg-gradient-to-br ${config.gradient} shadow-lg ${config.glow} text-white`
+                : 'bg-secondary/50 hover:bg-secondary text-foreground/80'
+            )}
+          >
+            <span className="opacity-60">[</span>
+            <span className="filter drop-shadow-lg">{config.emoji}</span>
+            <span className="font-medium">{config.label}</span>
+            <span className="opacity-60">]</span>
+          </motion.button>
+        ))}
+      </div>
     </div>
   );
 }
