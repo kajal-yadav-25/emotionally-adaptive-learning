@@ -46,11 +46,11 @@ serve(async (req) => {
                 },
                 {
                   type: 'text',
-                  text: `Analyze the tone, pace, energy, and emotional qualities of this voice recording.
+                 text: `Analyze the tone, pace, energy, and emotional qualities of this voice recording.
 
 Return ONLY a valid JSON object (no markdown, no explanation) in exactly this format:
 {
-  "mood": "energetic|calm|focused|creative|motivated",
+  "mood": "energetic|calm|focused|creative|motivated|sad|anxious|bored|unmotivated|curious",
   "confidence": 0.0-1.0,
   "suggestedDifficulty": "easy|medium|moderate|hard",
   "voiceTone": "brief description of voice tone",
@@ -63,12 +63,17 @@ Mood rules based on voice:
 - Clear, deliberate, steady pace → "focused"
 - Varied pitch, expressive, curious → "creative"
 - Confident, strong, clear voice → "motivated"
+- Quiet, shaky, low monotone, sighing → "sad"
+- Rapid, uneven, high-pitched, breathless → "anxious"
+- Flat, monotone, low effort, trailing off → "bored"
+- Very low energy, mumbling, disengaged → "unmotivated"
+- Inquisitive inflection, rising tones, questioning → "curious"
 
 Difficulty mapping:
-- Very soft/slow/tired-sounding → "easy"
-- Relaxed/normal pace → "medium"
-- Clear/focused speech → "moderate"
-- Energetic/fast/enthusiastic → "hard"
+- Sad/unmotivated/very soft → "easy"
+- Calm/bored/normal pace → "medium"
+- Focused/curious/clear speech → "moderate"
+- Energetic/anxious/fast/enthusiastic → "hard"
 
 If no speech is detected, return speechDetected: false with reasonable defaults.`,
                 },
@@ -128,7 +133,7 @@ If no speech is detected, return speechDetected: false with reasonable defaults.
 
 Return ONLY a valid JSON object in exactly this format:
 {
-  "mood": "energetic|calm|focused|creative|motivated",
+  "mood": "energetic|calm|focused|creative|motivated|sad|anxious|bored|unmotivated|curious",
   "confidence": 0.0-1.0,
   "suggestedDifficulty": "easy|medium|moderate|hard",
   "voiceTone": "brief description",
@@ -140,7 +145,11 @@ Rules:
 - Low avg + low variance → "calm" → "easy"
 - Medium avg + low variance → "focused" → "moderate"
 - Medium avg + high variance → "creative" → "moderate"
-- High avg + low variance → "motivated" → "hard"`;
+- High avg + low variance → "motivated" → "hard"
+- Very low avg + very low variance → "sad" or "unmotivated" → "easy"
+- High variance + medium avg → "anxious" → "hard"
+- Low avg + zero variance → "bored" → "medium"
+- Medium avg + medium variance + rising patterns → "curious" → "moderate"`;
 
       const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
