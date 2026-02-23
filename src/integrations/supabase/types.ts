@@ -14,13 +14,113 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      completed_modules: {
+        Row: {
+          completed_at: string
+          id: string
+          learning_path_id: string
+          module_index: number
+          title: string
+          type: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          learning_path_id: string
+          module_index: number
+          title: string
+          type?: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          learning_path_id?: string
+          module_index?: number
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "completed_modules_learning_path_id_fkey"
+            columns: ["learning_path_id"]
+            isOneToOne: false
+            referencedRelation: "learning_paths"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_paths: {
+        Row: {
+          created_at: string
+          format: string
+          goal: string | null
+          id: string
+          mood: string
+          speed: string
+          topic: string
+          total_modules: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          format?: string
+          goal?: string | null
+          id?: string
+          mood?: string
+          speed?: string
+          topic: string
+          total_modules?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          format?: string
+          goal?: string | null
+          id?: string
+          mood?: string
+          speed?: string
+          topic?: string
+          total_modules?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      user_owns_learning_path: { Args: { _path_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

@@ -1,12 +1,14 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Brain, Sparkles, Zap, Heart, BookOpen, Target, TrendingUp, Shield } from 'lucide-react';
+import { Brain, Sparkles, Zap, Heart, BookOpen, Target, TrendingUp, Shield, LogIn, LogOut, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useMood } from '@/contexts/MoodContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function LandingHero() {
   const navigate = useNavigate();
   const { moodColors } = useMood();
+  const { user, signOut } = useAuth();
 
   const scrollToFeatures = () => {
     document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' });
@@ -14,6 +16,26 @@ export function LandingHero() {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      {/* Auth buttons */}
+      <div className="absolute top-6 right-6 z-20 flex items-center gap-3">
+        {user ? (
+          <>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/progress')}>
+              <User className="w-4 h-4 mr-1" />
+              {user.email?.split('@')[0]}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={signOut}>
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </>
+        ) : (
+          <Button variant="glass" size="sm" onClick={() => navigate('/auth')}>
+            <LogIn className="w-4 h-4 mr-1" />
+            Sign In
+          </Button>
+        )}
+      </div>
+
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
         <div className={`absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r ${moodColors.gradient} rounded-full blur-3xl opacity-20 animate-float`} />
