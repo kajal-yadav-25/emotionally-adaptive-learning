@@ -41,6 +41,7 @@ const steps = [
   { id: 'mood', title: 'Emotional State', icon: Brain },
   { id: 'speed', title: 'Speed', icon: Gauge },
   { id: 'format', title: 'Format', icon: Video },
+  { id: 'review', title: 'Review', icon: CheckCircle2 },
 ];
 
 const speedOptions = [
@@ -421,6 +422,7 @@ export function LearningPathCreator() {
       case 1: return true;
       case 2: return true;
       case 3: return true;
+      case 4: return true;
       default: return false;
     }
   };
@@ -957,6 +959,61 @@ export function LearningPathCreator() {
                 </div>
               )}
 
+              {/* Step 4: Review */}
+              {currentStep === 4 && (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <motion.div
+                      className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${moodColors.gradient} flex items-center justify-center mx-auto mb-4`}
+                      animate={{ scale: [1, 1.15, 1], rotate: [0, 10, -10, 0] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                    >
+                      <CheckCircle2 className="w-8 h-8 text-foreground" />
+                    </motion.div>
+                    <h2 className="font-display text-3xl font-bold mb-2">Review Your Path</h2>
+                    <p className="text-muted-foreground">Everything looks good? Hit Done to generate!</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      { label: 'Topic', value: data.topic, emoji: '📚', step: 0 },
+                      { label: 'Mood', value: moodConfig[data.mood].label, emoji: moodConfig[data.mood].emoji, step: 1 },
+                      { label: 'Speed', value: speedOptions.find(s => s.value === data.speed)?.label || data.speed, emoji: data.speed === 'fast' ? '🚀' : data.speed === 'slow' ? '🐢' : '⚖️', step: 2 },
+                      { label: 'Format', value: formatOptions.find(f => f.value === data.format)?.label || data.format, emoji: data.format === 'videos' ? '🎬' : data.format === 'articles' ? '📝' : '✨', step: 3 },
+                    ].map((item, i) => (
+                      <motion.button
+                        key={item.label}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        whileHover={{ scale: 1.04, y: -2 }}
+                        onClick={() => setCurrentStep(item.step)}
+                        className="p-4 rounded-2xl bg-secondary/40 border border-border/30 text-left hover:bg-secondary/60 transition-all group"
+                      >
+                        <div className="flex items-center gap-3 mb-1">
+                          <span className="text-2xl">{item.emoji}</span>
+                          <span className="text-xs text-muted-foreground uppercase tracking-wider">{item.label}</span>
+                        </div>
+                        <p className="font-semibold text-lg truncate">{item.value}</p>
+                        <span className="text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">Click to edit</span>
+                      </motion.button>
+                    ))}
+                  </div>
+
+                  {detectedEmotion && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className={`rounded-xl p-3 bg-gradient-to-r ${moodConfig[detectedEmotion.mood].gradient}/20 border border-primary/20`}
+                    >
+                      <p className="text-sm text-muted-foreground">
+                        {detectedEmotion.source === 'face' ? '👁️' : '🎤'} AI suggested <strong className="text-foreground">{detectedEmotion.suggestedDifficulty}</strong> difficulty based on your {detectedEmotion.source}
+                      </p>
+                    </motion.div>
+                  )}
+                </div>
+              )}
+
               {/* Navigation */}
               <div className="flex justify-between mt-8 pt-6 border-t border-border/50">
                 <Button variant="ghost" onClick={handleBack}>
@@ -977,8 +1034,8 @@ export function LearningPathCreator() {
                       </>
                     ) : currentStep === steps.length - 1 ? (
                       <>
-                        <Zap className="w-4 h-4" />
-                        Generate Path
+                        <CheckCircle2 className="w-4 h-4" />
+                        Done
                       </>
                     ) : (
                       <>
