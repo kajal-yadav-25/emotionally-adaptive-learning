@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { useMood } from '@/contexts/MoodContext';
+import { useMood, moodConfig, MoodType } from '@/contexts/MoodContext';
 import { useProgress } from '@/contexts/ProgressContext';
 import { 
   ArrowLeft, 
@@ -15,7 +15,8 @@ import {
   Flame,
   History,
   ChevronUp,
-  ExternalLink
+  ExternalLink,
+  Brain
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
@@ -405,6 +406,9 @@ export function LearningPathView() {
     format: string; 
     goal: string;
     pathId?: string;
+    suggestedDifficulty?: string | null;
+    emotionSource?: string | null;
+    detectedConfidence?: number | null;
   } | null;
   
   const [pathId, setPathId] = useState<string | null>(pathData?.pathId || null);
@@ -531,6 +535,26 @@ export function LearningPathView() {
               </div>
               <h1 className="font-display text-4xl font-bold mb-2">{pathData.topic}</h1>
               <p className="text-muted-foreground">{pathData.goal}</p>
+              {/* Mood & Difficulty Indicator */}
+              <div className="flex items-center gap-3 mt-3 flex-wrap">
+                {pathData.mood && moodConfig[pathData.mood as MoodType] && (
+                  <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-gradient-to-r ${moodConfig[pathData.mood as MoodType].gradient} text-foreground`}>
+                    <Brain className="w-3.5 h-3.5" />
+                    {moodConfig[pathData.mood as MoodType].label}
+                  </span>
+                )}
+                {pathData.suggestedDifficulty && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-secondary/60 text-foreground capitalize">
+                    Difficulty: {pathData.suggestedDifficulty}
+                  </span>
+                )}
+                {pathData.emotionSource && (
+                  <span className="text-xs text-muted-foreground">
+                    via {pathData.emotionSource === 'face' ? 'camera' : 'voice'} detection
+                    {pathData.detectedConfidence ? ` (${Math.round(pathData.detectedConfidence * 100)}%)` : ''}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-6">
               <div className="text-center">
