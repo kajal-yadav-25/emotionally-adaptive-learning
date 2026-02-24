@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,29 +9,20 @@ import {
   Book, 
   Video, 
   FileText, 
-  Zap, 
-  Gauge,
-  Brain,
   Sparkles,
   CheckCircle2,
-  Camera,
-  CameraOff,
-  Mic,
-  MicOff,
-  Loader2
+  Brain,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 
-type LearningSpeed = 'slow' | 'moderate' | 'fast';
 type ContentFormat = 'videos' | 'articles' | 'mixed';
 
 interface LearningPathData {
   topic: string;
   mood: MoodType;
-  speed: LearningSpeed;
+  speed: string;
   format: ContentFormat;
   goal: string;
 }
@@ -39,15 +30,7 @@ interface LearningPathData {
 const steps = [
   { id: 'topic', title: 'Topic', icon: Book },
   { id: 'mood', title: 'Emotional State', icon: Brain },
-  { id: 'speed', title: 'Speed', icon: Gauge },
   { id: 'format', title: 'Format', icon: Video },
-  { id: 'review', title: 'Review', icon: CheckCircle2 },
-];
-
-const speedOptions = [
-  { value: 'slow', label: 'Relaxed', desc: 'Take your time, deep understanding', icon: Gauge, color: 'from-blue-400 to-cyan-400', animDuration: 4 },
-  { value: 'moderate', label: 'Balanced', desc: 'Steady progress, good retention', icon: Zap, color: 'from-yellow-400 to-orange-400', animDuration: 2.5 },
-  { value: 'fast', label: 'Intensive', desc: 'Quick learning, high focus', icon: ArrowRight, color: 'from-red-400 to-rose-500', animDuration: 1.2 },
 ];
 
 const formatOptions = [
@@ -72,7 +55,6 @@ function FloatingParticles({ mood }: { mood: MoodType }) {
     curious: 'bg-yellow-400',
   };
 
-  // Different particle shapes based on mood
   const particleShape = ['sad', 'unmotivated', 'bored'].includes(mood) 
     ? 'rounded-full opacity-20' 
     : ['anxious'].includes(mood)
@@ -97,16 +79,8 @@ function FloatingParticles({ mood }: { mood: MoodType }) {
             scale: Math.random() * 0.5 + 0.5,
           }}
           animate={{
-            x: [
-              Math.random() * 400,
-              Math.random() * 800,
-              Math.random() * 400,
-            ],
-            y: [
-              Math.random() * 300,
-              Math.random() * 600,
-              Math.random() * 300,
-            ],
+            x: [Math.random() * 400, Math.random() * 800, Math.random() * 400],
+            y: [Math.random() * 300, Math.random() * 600, Math.random() * 300],
             opacity: config.animationIntensity === 'high' 
               ? [0.3, 0.7, 0.3] 
               : config.animationIntensity === 'medium' 
@@ -168,261 +142,11 @@ export function LearningPathCreator() {
   });
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Camera & Mic state
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [cameraOn, setCameraOn] = useState(false);
-  const [micOn, setMicOn] = useState(false);
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [audioLevel, setAudioLevel] = useState(0);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const animFrameRef = useRef<number | null>(null);
-
-  // AI Emotion Detection state
-  const [isDetecting, setIsDetecting] = useState(false);
-  const [detectedEmotion, setDetectedEmotion] = useState<{
-    mood: MoodType;
-    confidence: number;
-    suggestedDifficulty: 'easy' | 'medium' | 'moderate' | 'hard';
-    details: string;
-    source: 'face' | 'voice';
-  } | null>(null);
-  const faceDetectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const audioLevelHistoryRef = useRef<number[]>([]);
-
-  const stopStream = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach(t => t.stop());
-      setStream(null);
-    }
-    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    if (faceDetectIntervalRef.current) clearInterval(faceDetectIntervalRef.current);
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-    }
-    setCameraOn(false);
-    setMicOn(false);
-    setAudioLevel(0);
-  }, [stream]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (stream) stream.getTracks().forEach(t => t.stop());
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-      if (faceDetectIntervalRef.current) clearInterval(faceDetectIntervalRef.current);
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop();
-      }
-    };
-  }, [stream]);
-
-  // ──── AI Face Emotion Detection ────
-  const captureFrameAndDetect = useCallback(async () => {
-    if (!videoRef.current || !cameraOn || isDetecting) return;
-    const video = videoRef.current;
-    if (video.readyState < 2) return;
-
-    // Draw frame to canvas
-    const canvas = canvasRef.current || document.createElement('canvas');
-    canvas.width = 320;
-    canvas.height = 240;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.drawImage(video, 0, 0, 320, 240);
-
-    const imageBase64 = canvas.toDataURL('image/jpeg', 0.7);
-
-    setIsDetecting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('detect-face-emotion', {
-        body: { imageBase64 },
-      });
-
-      if (error) throw error;
-      if (data && !data.error && data.faceDetected !== false) {
-        const result = data as { mood: MoodType; confidence: number; suggestedDifficulty: 'easy' | 'medium' | 'moderate' | 'hard'; emotionDetails: string };
-        setDetectedEmotion({
-          mood: result.mood,
-          confidence: result.confidence,
-          suggestedDifficulty: result.suggestedDifficulty,
-          details: result.emotionDetails,
-          source: 'face',
-        });
-        // Auto-apply detected mood
-        setMood(result.mood);
-        setData(prev => ({ ...prev, mood: result.mood }));
-        toast.success(`😊 Mood detected: ${result.mood}`, {
-          description: `Confidence: ${Math.round(result.confidence * 100)}% • ${result.emotionDetails}`,
-        });
-      }
-    } catch (err) {
-      console.error('Face emotion detection error:', err);
-    } finally {
-      setIsDetecting(false);
-    }
-  }, [cameraOn, isDetecting, setMood]);
-
-  // ──── AI Voice Emotion Detection (using audio features) ────
-  const analyzeVoiceEmotion = useCallback(async () => {
-    if (audioLevelHistoryRef.current.length < 10) return;
-
-    const history = audioLevelHistoryRef.current;
-    const avgLevel = history.reduce((a, b) => a + b, 0) / history.length;
-    const maxLevel = Math.max(...history);
-    const mean = avgLevel;
-    const variance = history.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / history.length;
-
-    // Reset history for next window
-    audioLevelHistoryRef.current = [];
-
-    try {
-      const { data, error } = await supabase.functions.invoke('detect-voice-emotion', {
-        body: { audioFeatures: { avgLevel, maxLevel, variance } },
-      });
-
-      if (error) throw error;
-      if (data && !data.error) {
-        const result = data as { mood: MoodType; confidence: number; suggestedDifficulty: 'easy' | 'medium' | 'moderate' | 'hard'; voiceTone: string };
-        // Only update if not already detected by face (face takes priority)
-        if (!detectedEmotion || detectedEmotion.source === 'voice') {
-          setDetectedEmotion({
-            mood: result.mood,
-            confidence: result.confidence,
-            suggestedDifficulty: result.suggestedDifficulty,
-            details: result.voiceTone,
-            source: 'voice',
-          });
-          setMood(result.mood);
-          setData(prev => ({ ...prev, mood: result.mood }));
-          toast.success(`🎤 Voice mood detected: ${result.mood}`, {
-            description: `${result.voiceTone}`,
-          });
-        }
-      }
-    } catch (err) {
-      console.error('Voice emotion detection error:', err);
-    }
-  }, [detectedEmotion, setMood]);
-
-  // Start periodic face capture when camera is on
-  useEffect(() => {
-    if (cameraOn) {
-      // Capture after 4 seconds to let camera stabilize, then every 15 seconds
-      const initialTimeout = setTimeout(() => {
-        captureFrameAndDetect();
-        faceDetectIntervalRef.current = setInterval(captureFrameAndDetect, 15000);
-      }, 4000);
-      return () => {
-        clearTimeout(initialTimeout);
-        if (faceDetectIntervalRef.current) clearInterval(faceDetectIntervalRef.current);
-      };
-    } else {
-      if (faceDetectIntervalRef.current) {
-        clearInterval(faceDetectIntervalRef.current);
-        faceDetectIntervalRef.current = null;
-      }
-    }
-  }, [cameraOn, captureFrameAndDetect]);
-
-  // Analyze voice emotion every 10 seconds while mic is on
-  useEffect(() => {
-    if (!micOn) return;
-    const interval = setInterval(analyzeVoiceEmotion, 10000);
-    return () => clearInterval(interval);
-  }, [micOn, analyzeVoiceEmotion]);
-
-  const toggleCamera = async () => {
-    if (cameraOn) {
-      stopStream();
-      return;
-    }
-    try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: true, 
-        audio: micOn 
-      });
-      setStream(mediaStream);
-      setCameraOn(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
-      toast.success('Camera activated!', { description: 'We can see your expressions now.' });
-    } catch {
-      toast.error('Camera access denied', { description: 'Please allow camera access.' });
-    }
-  };
-
-  const toggleMic = async () => {
-    if (micOn) {
-      if (stream) {
-        stream.getAudioTracks().forEach(t => t.stop());
-      }
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop();
-      }
-      setMicOn(false);
-      setAudioLevel(0);
-      audioLevelHistoryRef.current = [];
-      return;
-    }
-    try {
-      const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Merge with existing video stream if camera is on
-      if (stream && cameraOn) {
-        audioStream.getAudioTracks().forEach(t => stream.addTrack(t));
-      } else {
-        setStream(audioStream);
-      }
-      setMicOn(true);
-
-      // Audio level visualization + history tracking for AI
-      const audioCtx = new AudioContext();
-      const source = audioCtx.createMediaStreamSource(audioStream);
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      source.connect(analyser);
-      analyserRef.current = analyser;
-
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      const updateLevel = () => {
-        analyser.getByteFrequencyData(dataArray);
-        const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-        const normalized = avg / 255;
-        setAudioLevel(normalized);
-        // Collect samples for AI voice analysis
-        audioLevelHistoryRef.current.push(normalized);
-        // Keep rolling window of last 50 samples
-        if (audioLevelHistoryRef.current.length > 50) {
-          audioLevelHistoryRef.current.shift();
-        }
-        animFrameRef.current = requestAnimationFrame(updateLevel);
-      };
-      updateLevel();
-
-      toast.success('Microphone activated!', { description: 'Listening to your voice tone for mood detection.' });
-    } catch {
-      toast.error('Microphone access denied');
-    }
-  };
-
-  // Attach video when stream changes
-  useEffect(() => {
-    if (videoRef.current && stream && cameraOn) {
-      videoRef.current.srcObject = stream;
-    }
-  }, [stream, cameraOn]);
-
   const canProceed = () => {
     switch (currentStep) {
       case 0: return data.topic.length > 2;
       case 1: return true;
       case 2: return true;
-      case 3: return true;
-      case 4: return true;
       default: return false;
     }
   };
@@ -444,7 +168,6 @@ export function LearningPathCreator() {
   };
 
   const handleGenerate = () => {
-    stopStream();
     setIsGenerating(true);
     setTimeout(() => {
       toast.success('Learning path created!', {
@@ -455,9 +178,6 @@ export function LearningPathCreator() {
         state: { 
           ...data, 
           goal: `Learn ${data.topic}`,
-          // Pass AI-detected difficulty suggestion so learning path can use it
-          suggestedDifficulty: detectedEmotion?.suggestedDifficulty || null,
-          emotionSource: detectedEmotion?.source || null,
         } 
       });
     }, 2000);
@@ -467,10 +187,9 @@ export function LearningPathCreator() {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Dynamic Particles */}
       <FloatingParticles mood={data.mood} />
 
-      {/* Background Effects - enhanced */}
+      {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
           className={`absolute top-1/4 right-1/4 w-96 h-96 bg-gradient-to-r ${moodColors.gradient} rounded-full blur-3xl`}
@@ -630,7 +349,7 @@ export function LearningPathCreator() {
                 </div>
               )}
 
-              {/* Step 1: Mood + Camera/Mic */}
+              {/* Step 1: Mood (manual selection only, no emojis, no descriptions) */}
               {currentStep === 1 && (
                 <div className="space-y-6">
                   <div className="text-center">
@@ -642,160 +361,10 @@ export function LearningPathCreator() {
                       <Brain className="w-8 h-8 text-foreground" />
                     </motion.div>
                     <h2 className="font-display text-3xl font-bold mb-2">How are you feeling?</h2>
-                    <p className="text-muted-foreground">Select your mood or let us detect it</p>
+                    <p className="text-muted-foreground">Select your current mood</p>
                   </div>
 
-                  {/* Camera & Mic Module */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="glass-card rounded-2xl p-4 border border-border/30"
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-muted-foreground">Emotion Detection</span>
-                      <div className="flex gap-2">
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={toggleCamera}
-                          className={cn(
-                            'p-2.5 rounded-xl transition-all duration-300',
-                            cameraOn
-                              ? `bg-gradient-to-br ${moodColors.gradient} shadow-lg`
-                              : 'bg-secondary/50 hover:bg-secondary'
-                          )}
-                        >
-                          {cameraOn ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4 text-muted-foreground" />}
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={toggleMic}
-                          className={cn(
-                            'p-2.5 rounded-xl transition-all duration-300 relative',
-                            micOn
-                              ? `bg-gradient-to-br ${moodColors.gradient} shadow-lg`
-                              : 'bg-secondary/50 hover:bg-secondary'
-                          )}
-                        >
-                          {micOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4 text-muted-foreground" />}
-                          {/* Audio level ring */}
-                          {micOn && (
-                            <motion.div
-                              className={`absolute inset-0 rounded-xl border-2 border-primary`}
-                              animate={{ scale: 1 + audioLevel * 0.4, opacity: audioLevel }}
-                              transition={{ duration: 0.1 }}
-                            />
-                          )}
-                        </motion.button>
-                      </div>
-                    </div>
-
-                    {/* Camera Preview */}
-                    <AnimatePresence>
-                      {cameraOn && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 180, opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.4 }}
-                          className="relative rounded-xl overflow-hidden mb-3 bg-background/80"
-                        >
-                          <video
-                            ref={videoRef}
-                            autoPlay
-                            muted
-                            playsInline
-                            className="w-full h-full object-cover rounded-xl mirror"
-                            style={{ transform: 'scaleX(-1)' }}
-                          />
-                          {/* Hidden canvas for frame capture */}
-                          <canvas ref={canvasRef} className="hidden" />
-                          {/* Scanning overlay */}
-                          <motion.div
-                            className={`absolute inset-0 bg-gradient-to-b from-transparent via-primary/10 to-transparent`}
-                            animate={{ y: ['-100%', '100%'] }}
-                            transition={{ duration: 2.5, repeat: Infinity, ease: 'linear' }}
-                          />
-                          <div className="absolute bottom-2 left-2 right-2 flex items-center gap-2">
-                            {isDetecting ? (
-                              <>
-                                <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                                <span className="text-xs text-foreground/80">Detecting emotion via AI...</span>
-                              </>
-                            ) : detectedEmotion?.source === 'face' ? (
-                              <>
-                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                <span className="text-xs text-foreground/80">
-                                  {moodConfig[detectedEmotion.mood].emoji} {detectedEmotion.mood} ({Math.round(detectedEmotion.confidence * 100)}% confidence)
-                                </span>
-                              </>
-                            ) : (
-                              <>
-                                <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
-                                <span className="text-xs text-foreground/80">Analyzing expressions...</span>
-                              </>
-                            )}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Audio Visualizer */}
-                    <AnimatePresence>
-                      {micOn && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 40, opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="flex items-center gap-1 justify-center rounded-xl bg-background/50 px-4"
-                        >
-                          {Array.from({ length: 16 }).map((_, i) => (
-                            <motion.div
-                              key={i}
-                              className={`w-1 rounded-full bg-gradient-to-t ${moodColors.gradient}`}
-                              animate={{
-                                height: Math.max(4, audioLevel * 30 * (1 + Math.sin(i * 0.8) * 0.5)),
-                              }}
-                              transition={{ duration: 0.05 }}
-                            />
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    {/* AI Detection Result Banner */}
-                    <AnimatePresence>
-                      {detectedEmotion && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
-                          className={`rounded-xl p-3 mt-2 bg-gradient-to-r ${moodConfig[detectedEmotion.mood].gradient} opacity-90`}
-                        >
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-medium text-foreground">
-                              {detectedEmotion.source === 'face' ? '👁️ Face' : '🎤 Voice'} detection → {moodConfig[detectedEmotion.mood].emoji} <strong>{detectedEmotion.mood}</strong>
-                            </span>
-                            <span className="bg-background/30 px-2 py-0.5 rounded-full text-foreground font-semibold capitalize">
-                              {detectedEmotion.suggestedDifficulty}
-                            </span>
-                          </div>
-                          <p className="text-xs text-foreground/70 mt-1">{detectedEmotion.details}</p>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    {!cameraOn && !micOn && (
-                      <p className="text-xs text-muted-foreground text-center py-2">
-                        Enable camera or mic for AI emotion detection, or select manually below
-                      </p>
-                    )}
-
-                  </motion.div>
-
-                  {/* Mood Grid */}
+                  {/* Mood Grid - no emojis, no descriptions */}
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     {moods.map(([moodType, config], i) => (
                       <motion.button
@@ -810,7 +379,7 @@ export function LearningPathCreator() {
                           setData({ ...data, mood: moodType });
                         }}
                         className={cn(
-                          'p-4 rounded-2xl border transition-all duration-300 text-left relative overflow-hidden',
+                          'p-4 rounded-2xl border transition-all duration-300 text-center relative overflow-hidden',
                           data.mood === moodType
                             ? `bg-gradient-to-br ${config.gradient} border-transparent shadow-lg ${config.glow}`
                             : 'bg-secondary/30 border-border/50 hover:bg-secondary/50'
@@ -823,97 +392,15 @@ export function LearningPathCreator() {
                             transition={{ duration: 2, repeat: Infinity }}
                           />
                         )}
-                        <span className="text-3xl mb-2 block">{config.emoji}</span>
                         <span className="font-semibold block">{config.label}</span>
-                        <span className="text-xs text-muted-foreground">{config.description}</span>
                       </motion.button>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Step 2: Speed */}
+              {/* Step 2: Format */}
               {currentStep === 2 && (
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <motion.div
-                      className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${moodColors.gradient} flex items-center justify-center mx-auto mb-4`}
-                      animate={{ rotate: [0, 360] }}
-                      transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-                    >
-                      <Gauge className="w-8 h-8 text-foreground" />
-                    </motion.div>
-                    <h2 className="font-display text-3xl font-bold mb-2">Learning Speed</h2>
-                    <p className="text-muted-foreground">Choose a pace that matches your availability</p>
-                  </div>
-                  <div className="space-y-4">
-                    {speedOptions.map((option, i) => (
-                      <motion.button
-                        key={option.value}
-                        initial={{ opacity: 0, x: -30 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.12, type: 'spring', stiffness: 200 }}
-                        whileHover={{ scale: 1.03, x: 10 }}
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => setData({ ...data, speed: option.value as LearningSpeed })}
-                        className={cn(
-                          'w-full p-5 rounded-2xl border flex items-center gap-5 transition-all duration-300 text-left relative overflow-hidden',
-                          data.speed === option.value
-                            ? `bg-gradient-to-r ${option.color} border-transparent shadow-lg`
-                            : 'bg-secondary/30 border-border/50 hover:bg-secondary/50'
-                        )}
-                      >
-                        {/* Animated pulse bg for selected */}
-                        {data.speed === option.value && (
-                          <motion.div
-                            className="absolute inset-0 bg-white/10"
-                            animate={{ opacity: [0, 0.15, 0] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                          />
-                        )}
-                        {/* Icon with speed-based animation */}
-                        <motion.div
-                          className={cn(
-                            'w-14 h-14 rounded-xl flex items-center justify-center shrink-0',
-                            data.speed === option.value
-                              ? 'bg-white/20'
-                              : `bg-gradient-to-br ${option.color} opacity-80`
-                          )}
-                          animate={data.speed === option.value ? { 
-                            scale: [1, 1.15, 1],
-                          } : {}}
-                          transition={{ duration: option.animDuration, repeat: Infinity, ease: 'easeInOut' }}
-                        >
-                          <option.icon className="w-7 h-7 text-foreground" />
-                        </motion.div>
-                        <div className="flex-1">
-                          <span className="font-semibold block text-lg">{option.label}</span>
-                          <span className="text-sm text-muted-foreground">{option.desc}</span>
-                        </div>
-                        {data.speed === option.value && (
-                          <motion.div
-                            initial={{ scale: 0, rotate: -90 }}
-                            animate={{ scale: 1, rotate: 0 }}
-                            transition={{ type: 'spring', stiffness: 400 }}
-                          >
-                            <CheckCircle2 className="w-6 h-6 text-foreground/90" />
-                          </motion.div>
-                        )}
-                        {/* Speed indicator bar */}
-                        <motion.div
-                          className={`absolute bottom-0 left-0 h-1 bg-gradient-to-r ${option.color}`}
-                          initial={{ width: '0%' }}
-                          animate={{ width: data.speed === option.value ? '100%' : '0%' }}
-                          transition={{ duration: 0.5, ease: 'easeOut' }}
-                        />
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Step 3: Format */}
-              {currentStep === 3 && (
                 <div className="space-y-6">
                   <div className="text-center">
                     <motion.div
@@ -956,61 +443,6 @@ export function LearningPathCreator() {
                       </motion.button>
                     ))}
                   </div>
-                </div>
-              )}
-
-              {/* Step 4: Review */}
-              {currentStep === 4 && (
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <motion.div
-                      className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${moodColors.gradient} flex items-center justify-center mx-auto mb-4`}
-                      animate={{ scale: [1, 1.15, 1], rotate: [0, 10, -10, 0] }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                    >
-                      <CheckCircle2 className="w-8 h-8 text-foreground" />
-                    </motion.div>
-                    <h2 className="font-display text-3xl font-bold mb-2">Review Your Path</h2>
-                    <p className="text-muted-foreground">Everything looks good? Hit Done to generate!</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      { label: 'Topic', value: data.topic, emoji: '📚', step: 0 },
-                      { label: 'Mood', value: moodConfig[data.mood].label, emoji: moodConfig[data.mood].emoji, step: 1 },
-                      { label: 'Speed', value: speedOptions.find(s => s.value === data.speed)?.label || data.speed, emoji: data.speed === 'fast' ? '🚀' : data.speed === 'slow' ? '🐢' : '⚖️', step: 2 },
-                      { label: 'Format', value: formatOptions.find(f => f.value === data.format)?.label || data.format, emoji: data.format === 'videos' ? '🎬' : data.format === 'articles' ? '📝' : '✨', step: 3 },
-                    ].map((item, i) => (
-                      <motion.button
-                        key={item.label}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        whileHover={{ scale: 1.04, y: -2 }}
-                        onClick={() => setCurrentStep(item.step)}
-                        className="p-4 rounded-2xl bg-secondary/40 border border-border/30 text-left hover:bg-secondary/60 transition-all group"
-                      >
-                        <div className="flex items-center gap-3 mb-1">
-                          <span className="text-2xl">{item.emoji}</span>
-                          <span className="text-xs text-muted-foreground uppercase tracking-wider">{item.label}</span>
-                        </div>
-                        <p className="font-semibold text-lg truncate">{item.value}</p>
-                        <span className="text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">Click to edit</span>
-                      </motion.button>
-                    ))}
-                  </div>
-
-                  {detectedEmotion && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className={`rounded-xl p-3 bg-gradient-to-r ${moodConfig[detectedEmotion.mood].gradient}/20 border border-primary/20`}
-                    >
-                      <p className="text-sm text-muted-foreground">
-                        {detectedEmotion.source === 'face' ? '👁️' : '🎤'} AI suggested <strong className="text-foreground">{detectedEmotion.suggestedDifficulty}</strong> difficulty based on your {detectedEmotion.source}
-                      </p>
-                    </motion.div>
-                  )}
                 </div>
               )}
 
