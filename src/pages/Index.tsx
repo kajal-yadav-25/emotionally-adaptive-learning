@@ -1,44 +1,28 @@
 import { LandingHero } from '@/components/LandingHero';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { useMood } from '@/contexts/MoodContext';
 import { useNavigate } from 'react-router-dom';
-import { Brain, Zap, LineChart, Users, Sparkles, Shield } from 'lucide-react';
+import { Brain, Zap, LineChart, Users, Sparkles, Shield, ArrowRight, Star } from 'lucide-react';
+import { useRef } from 'react';
 
 const Index = () => {
   const { moodColors } = useMood();
   const navigate = useNavigate();
+  const featuresRef = useRef<HTMLDivElement>(null);
 
   const features = [
-    {
-      icon: Brain,
-      title: 'Emotion AI',
-      description: 'Advanced algorithms detect your emotional state and adjust learning content accordingly.'
-    },
-    {
-      icon: Zap,
-      title: 'Adaptive Pacing',
-      description: 'Content difficulty and speed adapt in real-time based on your energy levels.'
-    },
-    {
-      icon: LineChart,
-      title: 'Progress Analytics',
-      description: 'Track your learning patterns and emotional trends over time.'
-    },
-    {
-      icon: Users,
-      title: 'Community Learning',
-      description: 'Connect with learners who share similar emotional learning patterns.'
-    },
-    {
-      icon: Sparkles,
-      title: 'Smart Recommendations',
-      description: 'Get personalized content suggestions based on your mood history.'
-    },
-    {
-      icon: Shield,
-      title: 'Safe Learning Space',
-      description: 'Your emotional data is private and used only to enhance your experience.'
-    }
+    { icon: Brain, title: 'Emotion AI', description: 'Advanced algorithms detect your emotional state and adjust learning content accordingly.', gradient: 'from-orange-500 to-amber-400' },
+    { icon: Zap, title: 'Adaptive Pacing', description: 'Content difficulty and speed adapt in real-time based on your energy levels.', gradient: 'from-blue-500 to-cyan-400' },
+    { icon: LineChart, title: 'Progress Analytics', description: 'Track your learning patterns and emotional trends over time.', gradient: 'from-green-500 to-emerald-400' },
+    { icon: Users, title: 'Community Learning', description: 'Connect with learners who share similar emotional learning patterns.', gradient: 'from-purple-500 to-pink-400' },
+    { icon: Sparkles, title: 'Smart Recommendations', description: 'Get personalized content suggestions based on your mood history.', gradient: 'from-rose-500 to-pink-400' },
+    { icon: Shield, title: 'Safe Learning Space', description: 'Your emotional data is private and used only to enhance your experience.', gradient: 'from-teal-500 to-cyan-400' },
+  ];
+
+  const testimonials = [
+    { name: 'Alex R.', role: 'CS Student', text: 'MoodLearn completely changed how I study. When I\'m anxious before exams, it gives me calming content first.', stars: 5 },
+    { name: 'Priya M.', role: 'Self-learner', text: 'The emotion detection is shockingly accurate. It knows when I need a break before I do.', stars: 5 },
+    { name: 'Jordan K.', role: 'Developer', text: 'Finally an app that understands that my 7am brain is different from my 10pm brain.', stars: 5 },
   ];
 
   return (
@@ -46,9 +30,10 @@ const Index = () => {
       <LandingHero />
 
       {/* Features Section */}
-      <section id="features-section" className="py-24 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-card/50 to-background" />
-        
+      <section id="features-section" ref={featuresRef} className="py-28 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-card/30 to-background" />
+        <div className="absolute inset-0 noise-overlay" />
+
         <div className="relative container mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -56,32 +41,96 @@ const Index = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
-              Why Choose{' '}
+            <motion.span
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6"
+            >
+              Why Choose Us
+            </motion.span>
+            <h2 className="font-display text-4xl md:text-6xl font-bold mb-5 tracking-tight">
+              Learning that{' '}
               <span className={`bg-gradient-to-r ${moodColors.gradient} bg-clip-text text-transparent`}>
-                Emotion Learning?
+                feels right
               </span>
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               Traditional learning ignores how you feel. We believe emotions are the key to effective learning.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="glass-card rounded-2xl p-8 hover:border-primary/30 transition-all duration-300 group"
+                transition={{ delay: index * 0.08 }}
+                whileHover={{ y: -6 }}
+                className="glass-card-hover rounded-2xl p-8 group glow-border relative overflow-hidden"
               >
-                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${moodColors.gradient} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                <motion.div
+                  className={`absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br ${feature.gradient} rounded-full blur-3xl opacity-0 group-hover:opacity-10 transition-opacity duration-700`}
+                />
+                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300`}>
                   <feature.icon className="w-7 h-7 text-foreground" />
                 </div>
                 <h3 className="font-display text-xl font-semibold mb-3">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
+                <p className="text-muted-foreground leading-relaxed text-sm">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-24 relative">
+        <div className="absolute inset-0 overflow-hidden">
+          <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r ${moodColors.gradient} rounded-full blur-[180px] opacity-5`} />
+        </div>
+        <div className="relative container mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-14"
+          >
+            <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
+              Testimonials
+            </span>
+            <h2 className="font-display text-4xl md:text-5xl font-bold tracking-tight">
+              Loved by <span className={`bg-gradient-to-r ${moodColors.gradient} bg-clip-text text-transparent`}>learners</span>
+            </h2>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {testimonials.map((t, i) => (
+              <motion.div
+                key={t.name}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                whileHover={{ y: -4 }}
+                className="glass-card-hover rounded-2xl p-7 glow-border"
+              >
+                <div className="flex gap-1 mb-4">
+                  {Array.from({ length: t.stars }).map((_, j) => (
+                    <Star key={j} className="w-4 h-4 fill-primary text-primary" />
+                  ))}
+                </div>
+                <p className="text-foreground/90 text-sm leading-relaxed mb-5 italic">"{t.text}"</p>
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${moodColors.gradient} flex items-center justify-center text-sm font-bold`}>
+                    {t.name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">{t.role}</p>
+                  </div>
+                </div>
               </motion.div>
             ))}
           </div>
@@ -89,36 +138,52 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 relative">
-        <div className={`absolute inset-0 bg-gradient-to-r ${moodColors.gradient} opacity-5`} />
+      <section className="py-28 relative">
+        <div className={`absolute inset-0 bg-gradient-to-r ${moodColors.gradient} opacity-[0.03]`} />
+        <div className="absolute inset-0 noise-overlay" />
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="container mx-auto px-6 text-center"
+          className="container mx-auto px-6 text-center relative z-10"
         >
-          <h2 className="font-display text-4xl md:text-5xl font-bold mb-6">
-            Ready to Learn Smarter?
+          <motion.div
+            className={`w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br ${moodColors.gradient} flex items-center justify-center mb-8 shadow-2xl`}
+            animate={{ y: [0, -8, 0], rotate: [0, 3, -3, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <Sparkles className="w-10 h-10 text-foreground" />
+          </motion.div>
+          <h2 className="font-display text-4xl md:text-6xl font-bold mb-6 tracking-tight">
+            Ready to Learn <span className={`bg-gradient-to-r ${moodColors.gradient} bg-clip-text text-transparent`}>Smarter</span>?
           </h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
             Join thousands of learners who have transformed their education journey with emotion-adaptive learning.
           </p>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className={`px-8 py-4 rounded-xl bg-gradient-to-r ${moodColors.gradient} font-semibold text-lg shadow-lg transition-all`}
+            className={`px-10 py-5 rounded-2xl bg-gradient-to-r ${moodColors.gradient} font-semibold text-lg shadow-xl shadow-primary/20 transition-all inline-flex items-center gap-3`}
             onClick={() => navigate('/create-path')}
           >
             Start Your Journey
+            <ArrowRight className="w-5 h-5" />
           </motion.button>
         </motion.div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-border/50">
-        <div className="container mx-auto px-6 text-center text-muted-foreground">
-          <p className="font-display text-lg mb-2">EmotionLearn</p>
-          <p className="text-sm">Adaptive learning that understands you.</p>
+      <footer className="py-14 border-t border-border/30">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${moodColors.gradient} flex items-center justify-center`}>
+                <Brain className="w-4 h-4 text-foreground" />
+              </div>
+              <span className="font-display font-bold">MoodLearn</span>
+            </div>
+            <p className="text-sm text-muted-foreground">Adaptive learning that understands you.</p>
+          </div>
         </div>
       </footer>
     </div>

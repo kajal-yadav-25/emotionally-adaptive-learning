@@ -20,22 +20,24 @@ import {
   BarChart3,
   Award,
   LogOut,
-  User
+  User,
+  Brain,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, differenceInDays, isToday, isYesterday } from 'date-fns';
+import { format, isToday, isYesterday } from 'date-fns';
 
 function StatCard({ icon: Icon, value, label, gradient }: { icon: any; value: string | number; label: string; gradient: string }) {
   return (
     <motion.div
-      whileHover={{ scale: 1.03, y: -2 }}
-      className="glass-card rounded-2xl p-5 text-center group hover:border-primary/30 transition-all"
+      whileHover={{ scale: 1.03, y: -4 }}
+      className="glass-card-hover rounded-2xl p-5 text-center glow-border"
     >
-      <div className={`w-10 h-10 mx-auto rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-3 group-hover:shadow-lg transition-shadow`}>
+      <div className={`w-11 h-11 mx-auto rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-3 shadow-lg`}>
         <Icon className="w-5 h-5 text-foreground" />
       </div>
-      <div className="text-2xl font-display font-bold">{value}</div>
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <div className="text-2xl font-display font-bold stat-number">{value}</div>
+      <span className="text-xs text-muted-foreground mt-0.5 block">{label}</span>
     </motion.div>
   );
 }
@@ -46,14 +48,21 @@ function AchievementBadge({ icon: Icon, title, unlocked, gradient }: { icon: any
       whileHover={unlocked ? { scale: 1.1, rotate: 5 } : {}}
       className={cn(
         'flex flex-col items-center gap-2 p-3 rounded-xl transition-all',
-        unlocked ? 'opacity-100' : 'opacity-30 grayscale'
+        unlocked ? 'opacity-100' : 'opacity-25 grayscale'
       )}
     >
       <div className={cn(
-        'w-12 h-12 rounded-full flex items-center justify-center',
+        'w-13 h-13 rounded-full flex items-center justify-center w-[52px] h-[52px] relative',
         unlocked ? `bg-gradient-to-br ${gradient} shadow-lg` : 'bg-muted'
       )}>
         <Icon className="w-6 h-6 text-foreground" />
+        {unlocked && (
+          <motion.div
+            className="absolute inset-0 rounded-full border-2 border-primary/30"
+            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          />
+        )}
       </div>
       <span className="text-xs font-medium text-center">{title}</span>
     </motion.div>
@@ -70,7 +79,6 @@ export function LearningProgressView() {
   const totalModules = history.reduce((acc, path) => acc + path.totalModules, 0);
   const overallProgress = totalModules > 0 ? (totalCompleted / totalModules) * 100 : 0;
 
-  // Calculate streak (consecutive days with activity)
   const activityDates = history
     .flatMap(p => p.completedModules.map(m => new Date(m.completedAt)))
     .sort((a, b) => b.getTime() - a.getTime());
@@ -80,7 +88,6 @@ export function LearningProgressView() {
     const today = new Date();
     let checkDate = today;
     const dateSet = new Set(activityDates.map(d => format(d, 'yyyy-MM-dd')));
-    
     if (dateSet.has(format(today, 'yyyy-MM-dd')) || dateSet.has(format(new Date(today.getTime() - 86400000), 'yyyy-MM-dd'))) {
       while (dateSet.has(format(checkDate, 'yyyy-MM-dd'))) {
         streak++;
@@ -89,12 +96,10 @@ export function LearningProgressView() {
     }
   }
 
-  // Mood distribution
   const moodCounts: Record<string, number> = {};
   history.forEach(p => { moodCounts[p.mood] = (moodCounts[p.mood] || 0) + 1; });
   const topMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0];
 
-  // Achievements
   const achievements = [
     { icon: Star, title: 'First Path', unlocked: history.length >= 1, gradient: 'from-yellow-400 to-amber-500' },
     { icon: Flame, title: '3-Day Streak', unlocked: streak >= 3, gradient: 'from-orange-500 to-red-500' },
@@ -126,23 +131,33 @@ export function LearningProgressView() {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className={`absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br ${moodColors.gradient} rounded-full blur-3xl opacity-10`} />
-        <div className={`absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr ${moodColors.gradient} rounded-full blur-3xl opacity-5`} />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:64px_64px]" />
+      <div className="absolute inset-0 overflow-hidden noise-overlay">
+        <motion.div
+          className={`absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br ${moodColors.gradient} rounded-full blur-[150px]`}
+          animate={{ opacity: [0.06, 0.12, 0.06] }}
+          transition={{ duration: 8, repeat: Infinity }}
+        />
+        <motion.div
+          className={`absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr ${moodColors.gradient} rounded-full blur-[120px]`}
+          animate={{ opacity: [0.03, 0.08, 0.03] }}
+          transition={{ duration: 10, repeat: Infinity }}
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:80px_80px]" />
       </div>
 
       <div className="relative z-10 container mx-auto px-6 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <Button variant="ghost" onClick={() => navigate('/')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
+          <Button variant="ghost" onClick={() => navigate('/')} className="gap-2">
+            <ArrowLeft className="w-4 h-4" />
             Home
           </Button>
           {user && (
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/50 text-sm">
-                <User className="w-3.5 h-3.5 text-muted-foreground" />
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full glass-card text-sm">
+                <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${moodColors.gradient} flex items-center justify-center text-xs font-bold`}>
+                  {user.email?.charAt(0).toUpperCase()}
+                </div>
                 <span className="text-muted-foreground">{user.email}</span>
               </div>
               <Button variant="ghost" size="sm" onClick={signOut}>
@@ -153,11 +168,18 @@ export function LearningProgressView() {
         </div>
 
         {/* Title */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="font-display text-4xl font-bold mb-2">
-            My <span className={`bg-gradient-to-r ${moodColors.gradient} bg-clip-text text-transparent`}>Progress</span>
-          </h1>
-          <p className="text-muted-foreground">Track your learning journey and achievements</p>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
+          <div className="flex items-center gap-3 mb-3">
+            <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${moodColors.gradient} flex items-center justify-center shadow-lg`}>
+              <Brain className="w-6 h-6 text-foreground" />
+            </div>
+            <div>
+              <h1 className="font-display text-4xl font-bold">
+                My <span className={`bg-gradient-to-r ${moodColors.gradient} bg-clip-text text-transparent`}>Progress</span>
+              </h1>
+              <p className="text-muted-foreground text-sm">Track your learning journey and achievements</p>
+            </div>
+          </div>
         </motion.div>
 
         {/* Stats Grid */}
@@ -179,21 +201,24 @@ export function LearningProgressView() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="glass-card rounded-2xl p-6 mb-8"
+          className="glass-card rounded-2xl p-6 mb-8 glow-border"
         >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium">Overall Completion</span>
-            <span className="text-sm text-muted-foreground">{totalCompleted}/{totalModules} modules</span>
+            <span className="text-sm font-medium flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              Overall Completion
+            </span>
+            <span className="text-sm text-muted-foreground stat-number">{totalCompleted}/{totalModules} modules</span>
           </div>
-          <div className="h-4 bg-muted rounded-full overflow-hidden">
+          <div className="h-4 bg-muted/50 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${overallProgress}%` }}
-              transition={{ duration: 1, ease: 'easeOut' }}
+              transition={{ duration: 1.2, ease: 'easeOut' }}
               className={`h-full bg-gradient-to-r ${moodColors.gradient} rounded-full relative`}
             >
               {overallProgress > 5 && (
-                <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.2)_50%,transparent_100%)] animate-gradient" />
+                <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.25)_50%,transparent_100%)] animate-gradient" />
               )}
             </motion.div>
           </div>
@@ -217,7 +242,7 @@ export function LearningProgressView() {
           </div>
         </motion.div>
 
-        {/* Two-column layout for paths + activity */}
+        {/* Two-column layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Learning Paths */}
           <div className="lg:col-span-2">
@@ -225,18 +250,27 @@ export function LearningProgressView() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="glass-card rounded-3xl p-12 text-center"
+                className="glass-card rounded-3xl p-12 text-center glow-border"
               >
-                <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                <motion.div
+                  className={`w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br ${moodColors.gradient} flex items-center justify-center mb-6 shadow-xl`}
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                >
+                  <BookOpen className="w-10 h-10 text-foreground" />
+                </motion.div>
                 <h2 className="text-2xl font-bold mb-2">No Learning Paths Yet</h2>
                 <p className="text-muted-foreground mb-6">Start your learning journey!</p>
-                <Button variant="mood" onClick={() => navigate('/create-path')}>
+                <Button variant="mood" size="lg" onClick={() => navigate('/create-path')}>
                   Create Learning Path
                 </Button>
               </motion.div>
             ) : (
               <div className="space-y-3">
-                <h2 className="text-lg font-semibold mb-3">Your Learning Paths</h2>
+                <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-primary" />
+                  Your Learning Paths
+                </h2>
                 {history.map((path, index) => {
                   const pathProgress = path.totalModules > 0 ? (path.completedModules.length / path.totalModules) * 100 : 0;
                   const isComplete = pathProgress === 100;
@@ -247,8 +281,9 @@ export function LearningProgressView() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
+                      whileHover={{ x: 4 }}
                       className={cn(
-                        'glass-card rounded-2xl p-5 cursor-pointer transition-all hover:border-primary/30',
+                        'glass-card-hover rounded-2xl p-5 cursor-pointer glow-border',
                         isComplete && 'border-primary/20'
                       )}
                       onClick={() => continuePath(path)}
@@ -256,7 +291,7 @@ export function LearningProgressView() {
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3 min-w-0">
                           <div className={cn(
-                            'w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
+                            'w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-lg',
                             isComplete ? `bg-gradient-to-br ${moodColors.gradient}` : 'bg-muted'
                           )}>
                             {isComplete ? <Trophy className="w-5 h-5" /> : <BookOpen className="w-5 h-5" />}
@@ -266,14 +301,16 @@ export function LearningProgressView() {
                             <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                               <Calendar className="w-3 h-3" />
                               {format(path.createdAt, 'MMM d, yyyy')}
-                              <span className="px-1.5 py-0.5 rounded-full bg-muted capitalize">{path.mood}</span>
+                              <span className={`px-1.5 py-0.5 rounded-full bg-gradient-to-r ${moodColors.gradient} text-foreground capitalize text-[10px] font-medium`}>
+                                {path.mood}
+                              </span>
                             </div>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-3 shrink-0">
                           <div className="text-right">
-                            <div className="text-sm font-bold">{path.completedModules.length}/{path.totalModules}</div>
+                            <div className="text-sm font-bold stat-number">{path.completedModules.length}/{path.totalModules}</div>
                             <div className="text-xs text-muted-foreground">{Math.round(pathProgress)}%</div>
                           </div>
                           <Button variant={isComplete ? 'outline' : 'mood'} size="sm" onClick={(e) => { e.stopPropagation(); continuePath(path); }}>
@@ -286,8 +323,8 @@ export function LearningProgressView() {
                       </div>
 
                       <div className="mt-3">
-                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                          <div style={{ width: `${pathProgress}%` }} className={`h-full bg-gradient-to-r ${moodColors.gradient} transition-all duration-500`} />
+                        <div className="h-1.5 bg-muted/50 rounded-full overflow-hidden">
+                          <div style={{ width: `${pathProgress}%` }} className={`h-full bg-gradient-to-r ${moodColors.gradient} transition-all duration-500 rounded-full`} />
                         </div>
                       </div>
                     </motion.div>
@@ -314,21 +351,34 @@ export function LearningProgressView() {
               .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())
               .slice(0, 8)
               .map((activity, index) => (
-                <div key={`${activity.pathId}-${activity.id}`} className={cn('flex items-start gap-3 py-3', index !== 0 && 'border-t border-border/50')}>
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br ${moodColors.gradient} shrink-0 mt-0.5`}>
-                    <CheckCircle2 className="w-3.5 h-3.5" />
+                <motion.div
+                  key={`${activity.pathId}-${activity.id}`}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className={cn('flex items-start gap-3 py-3', index !== 0 && 'border-t border-border/30')}
+                >
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br ${moodColors.gradient} shrink-0 mt-0.5 shadow-md`}>
+                    <CheckCircle2 className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">{activity.title}</p>
                     <p className="text-xs text-muted-foreground">{activity.pathTopic}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{formatActivityDate(new Date(activity.completedAt))}</p>
+                    <p className="text-xs text-muted-foreground/60 mt-0.5">{formatActivityDate(new Date(activity.completedAt))}</p>
                   </div>
-                </div>
+                </motion.div>
               ))}
               {history.flatMap(p => p.completedModules).length === 0 && (
-                <p className="text-center text-muted-foreground py-6 text-sm">
-                  No completed modules yet. Start learning!
-                </p>
+                <div className="text-center py-8">
+                  <motion.div
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                  >
+                    <TrendingUp className="w-10 h-10 mx-auto text-muted-foreground/30 mb-3" />
+                  </motion.div>
+                  <p className="text-muted-foreground text-sm">No completed modules yet</p>
+                  <p className="text-muted-foreground/60 text-xs mt-1">Start learning to see activity!</p>
+                </div>
               )}
             </div>
           </div>
