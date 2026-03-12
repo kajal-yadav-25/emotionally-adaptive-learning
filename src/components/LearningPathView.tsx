@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
+import { ModuleQuiz } from '@/components/ModuleQuiz';
 
 interface LearningModule {
   id: number;
@@ -414,6 +415,8 @@ export function LearningPathView() {
   const [pathId, setPathId] = useState<string | null>(pathData?.pathId || null);
   const [modules, setModules] = useState<LearningModule[]>([]);
   const [expandedModule, setExpandedModule] = useState<number | null>(null);
+  const [quizActiveFor, setQuizActiveFor] = useState<number | null>(null);
+  const [quizCompletedFor, setQuizCompletedFor] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (pathData) {
@@ -464,6 +467,37 @@ export function LearningPathView() {
     setModules(modules.map(m => 
       m.id === module.id ? { ...m, completed: newCompleted } : m
     ));
+  };
+
+  const handleMarkComplete = (module: LearningModule, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (quizCompletedFor.has(module.id)) {
+      // Quiz already done, just complete
+      toggleComplete(module);
+    } else {
+      // Show quiz first
+      setQuizActiveFor(module.id);
+    }
+  };
+
+  const handleQuizComplete = (moduleId: number, score: number, total: number) => {
+    setQuizActiveFor(null);
+    setQuizCompletedFor(prev => new Set(prev).add(moduleId));
+    // Auto-complete the module after quiz
+    const module = modules.find(m => m.id === moduleId);
+    if (module && !module.completed) {
+      toggleComplete(module);
+    }
+  };
+
+  const handleQuizSkip = (moduleId: number) => {
+    setQuizActiveFor(null);
+    setQuizCompletedFor(prev => new Set(prev).add(moduleId));
+    // Complete without quiz
+    const module = modules.find(m => m.id === moduleId);
+    if (module && !module.completed) {
+      toggleComplete(module);
+    }
   };
 
   const toggleExpand = (moduleId: number, e: React.MouseEvent) => {
@@ -730,14 +764,11 @@ export function LearningPathView() {
                                   <ExternalLink className="w-4 h-4 mr-2" />
                                   More on YouTube
                                 </Button>
-                                {!module.completed && (
+                                {!module.completed && quizActiveFor !== module.id && (
                                   <Button 
                                     variant="mood" 
                                     size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      toggleComplete(module);
-                                    }}
+                                    onClick={(e) => handleMarkComplete(module, e)}
                                   >
                                     <CheckCircle2 className="w-4 h-4 mr-1" />
                                     Mark as Complete
@@ -751,6 +782,16 @@ export function LearningPathView() {
                                 )}
                               </div>
                             </div>
+                            {quizActiveFor === module.id && (
+                              <ModuleQuiz
+                                topic={pathData.topic}
+                                moduleTitle={module.title}
+                                moduleType={module.type}
+                                moodGradient={moodColors.gradient}
+                                onComplete={(score, total) => handleQuizComplete(module.id, score, total)}
+                                onSkip={() => handleQuizSkip(module.id)}
+                              />
+                            )}
                           </div>
                         )}
                         
@@ -796,25 +837,32 @@ export function LearningPathView() {
                               </div>
                             </div>
                             <div className="flex justify-end">
-                              {!module.completed ? (
+                              {!module.completed && quizActiveFor !== module.id ? (
                                 <Button 
                                   variant="mood" 
                                   size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleComplete(module);
-                                  }}
+                                  onClick={(e) => handleMarkComplete(module, e)}
                                 >
                                   <CheckCircle2 className="w-4 h-4 mr-1" />
                                   Mark as Complete
                                 </Button>
-                              ) : (
+                              ) : module.completed ? (
                                 <span className="text-sm text-primary font-medium flex items-center gap-1.5">
                                   <CheckCircle2 className="w-4 h-4" />
                                   Completed
                                 </span>
-                              )}
+                              ) : null}
                             </div>
+                            {quizActiveFor === module.id && (
+                              <ModuleQuiz
+                                topic={pathData.topic}
+                                moduleTitle={module.title}
+                                moduleType={module.type}
+                                moodGradient={moodColors.gradient}
+                                onComplete={(score, total) => handleQuizComplete(module.id, score, total)}
+                                onSkip={() => handleQuizSkip(module.id)}
+                              />
+                            )}
                           </div>
                         )}
                       </div>
