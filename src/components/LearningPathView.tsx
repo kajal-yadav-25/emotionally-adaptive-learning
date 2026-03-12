@@ -605,10 +605,7 @@ export function LearningPathView() {
                 )}
               >
                 {/* Module Header */}
-                <div 
-                  className="p-6 flex items-center gap-4 cursor-pointer"
-                  onClick={() => toggleComplete(module)}
-                >
+                <div className="p-6 flex items-center gap-4">
                   <div className={cn(
                     'w-12 h-12 rounded-xl flex items-center justify-center transition-all shrink-0',
                     module.completed 
@@ -618,7 +615,7 @@ export function LearningPathView() {
                     {module.completed ? (
                       <CheckCircle2 className="w-6 h-6" />
                     ) : (
-                      <Icon className="w-6 h-6" />
+                      <span className="font-display font-bold text-lg text-muted-foreground">{index + 1}</span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -628,54 +625,73 @@ export function LearningPathView() {
                     )}>
                       {module.title}
                     </h3>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="capitalize">{module.type}</span>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                      <span className="flex items-center gap-1.5 capitalize">
+                        <Icon className="w-3.5 h-3.5" />
+                        {module.type}
+                      </span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {module.duration}
                       </span>
+                      {module.completed && (
+                        <span className="text-xs text-primary font-medium">✓ Completed</span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
+                    {/* Start button opens the content */}
                     {hasResource && (
                       <Button 
-                        variant="outline" 
+                        variant={isExpanded ? 'outline' : 'mood'} 
                         size="sm"
-                        onClick={(e) => toggleExpand(module.id, e)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleExpand(module.id, e);
+                        }}
                       >
                         {isExpanded ? (
                           <>
                             <ChevronUp className="w-4 h-4 mr-1" />
-                            Hide
+                            Close
+                          </>
+                        ) : module.completed ? (
+                          <>
+                            {module.type === 'video' ? <Play className="w-4 h-4 mr-1" /> : <FileText className="w-4 h-4 mr-1" />}
+                            Review
                           </>
                         ) : (
                           <>
-                            {module.type === 'video' ? <Play className="w-4 h-4 mr-1" /> : <FileText className="w-4 h-4 mr-1" />}
-                            {module.type === 'video' ? 'Watch' : 'Read'}
+                            <Play className="w-4 h-4 mr-1" />
+                            Start
                           </>
                         )}
                       </Button>
                     )}
-                    <Button 
-                      variant={module.completed ? 'ghost' : 'mood'} 
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleComplete(module);
-                      }}
-                    >
-                      {module.completed ? (
-                        <>
-                          <CheckCircle2 className="w-4 h-4 mr-1" />
-                          Done
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-4 h-4" />
-                          Start
-                        </>
-                      )}
-                    </Button>
+                    {/* Quiz modules get a start that marks complete */}
+                    {module.type === 'quiz' && (
+                      <Button 
+                        variant={module.completed ? 'ghost' : 'mood'} 
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!module.completed) toggleComplete(module);
+                        }}
+                        disabled={module.completed}
+                      >
+                        {module.completed ? (
+                          <>
+                            <CheckCircle2 className="w-4 h-4 mr-1" />
+                            Done
+                          </>
+                        ) : (
+                          <>
+                            <Play className="w-4 h-4 mr-1" />
+                            Take Quiz
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </div>
 
@@ -692,7 +708,6 @@ export function LearningPathView() {
                       <div className="px-6 pb-6">
                         {module.type === 'video' && module.searchQuery && (
                           <div className="space-y-4">
-                            {/* YouTube Video Embed */}
                             <div className="rounded-xl overflow-hidden bg-card/50 border border-border">
                               <div className="aspect-video relative">
                                 <iframe
@@ -706,61 +721,99 @@ export function LearningPathView() {
                                   className="w-full h-full"
                                 />
                               </div>
-                              <div className="p-4 bg-card/30 border-t border-border">
-                                <p className="text-sm text-muted-foreground mb-3">
-                                  Looking for videos on <strong className="text-foreground">{module.searchQuery}</strong>? Click below to find the best tutorials:
-                                </p>
+                              <div className="p-4 bg-card/30 border-t border-border flex items-center justify-between gap-3 flex-wrap">
                                 <Button 
-                                  variant="mood" 
-                                  className="w-full"
+                                  variant="outline" 
+                                  size="sm"
                                   onClick={() => openYouTubeSearch(module.searchQuery!)}
                                 >
                                   <ExternalLink className="w-4 h-4 mr-2" />
-                                  Watch {pathData?.topic} Tutorials on YouTube
+                                  More on YouTube
                                 </Button>
+                                {!module.completed && (
+                                  <Button 
+                                    variant="mood" 
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleComplete(module);
+                                    }}
+                                  >
+                                    <CheckCircle2 className="w-4 h-4 mr-1" />
+                                    Mark as Complete
+                                  </Button>
+                                )}
+                                {module.completed && (
+                                  <span className="text-sm text-primary font-medium flex items-center gap-1.5">
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    Completed
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
                         )}
                         
                         {module.type === 'article' && module.articleContent && (
-                          <div className="bg-card/50 rounded-xl p-6 max-h-[600px] overflow-y-auto border border-border">
-                            <div className="space-y-3">
-                              {module.articleContent.split('\n').map((line, i) => {
-                                const trimmedLine = line.trim();
-                                if (!trimmedLine) return null;
-                                
-                                if (trimmedLine.startsWith('# ')) {
-                                  return <h1 key={i} className="text-2xl font-bold text-foreground mt-6 mb-3 first:mt-0">{trimmedLine.replace('# ', '')}</h1>;
-                                } else if (trimmedLine.startsWith('## ')) {
-                                  return <h2 key={i} className="text-xl font-semibold text-foreground mt-6 mb-2">{trimmedLine.replace('## ', '')}</h2>;
-                                } else if (trimmedLine.startsWith('### ')) {
-                                  return <h3 key={i} className="text-lg font-medium text-foreground mt-4 mb-2">{trimmedLine.replace('### ', '')}</h3>;
-                                } else if (trimmedLine.startsWith('```')) {
-                                  return <div key={i} className="bg-muted/50 rounded-lg p-4 font-mono text-sm my-4">{trimmedLine.replace(/```/g, '')}</div>;
-                                } else if (trimmedLine.startsWith('|')) {
-                                  return <div key={i} className="font-mono text-sm text-muted-foreground bg-muted/30 px-2 py-1">{trimmedLine}</div>;
-                                } else if (trimmedLine.startsWith('- ✅') || trimmedLine.startsWith('- ❌')) {
-                                  return <p key={i} className="text-muted-foreground ml-4 py-0.5">{trimmedLine.replace('- ', '')}</p>;
-                                } else if (trimmedLine.startsWith('- **')) {
-                                  const match = trimmedLine.match(/- \*\*(.+?)\*\*:?\s*(.*)/)
-                                  if (match) {
-                                    return (
-                                      <div key={i} className="flex gap-2 text-muted-foreground ml-4 py-0.5">
-                                        <span className="text-primary">•</span>
-                                        <span><strong className="text-foreground">{match[1]}</strong>{match[2] ? `: ${match[2]}` : ''}</span>
-                                      </div>
-                                    );
+                          <div className="space-y-4">
+                            <div className="bg-card/50 rounded-xl p-6 max-h-[600px] overflow-y-auto border border-border">
+                              <div className="space-y-3">
+                                {module.articleContent.split('\n').map((line, i) => {
+                                  const trimmedLine = line.trim();
+                                  if (!trimmedLine) return null;
+                                  
+                                  if (trimmedLine.startsWith('# ')) {
+                                    return <h1 key={i} className="text-2xl font-bold text-foreground mt-6 mb-3 first:mt-0">{trimmedLine.replace('# ', '')}</h1>;
+                                  } else if (trimmedLine.startsWith('## ')) {
+                                    return <h2 key={i} className="text-xl font-semibold text-foreground mt-6 mb-2">{trimmedLine.replace('## ', '')}</h2>;
+                                  } else if (trimmedLine.startsWith('### ')) {
+                                    return <h3 key={i} className="text-lg font-medium text-foreground mt-4 mb-2">{trimmedLine.replace('### ', '')}</h3>;
+                                  } else if (trimmedLine.startsWith('```')) {
+                                    return <div key={i} className="bg-muted/50 rounded-lg p-4 font-mono text-sm my-4">{trimmedLine.replace(/```/g, '')}</div>;
+                                  } else if (trimmedLine.startsWith('|')) {
+                                    return <div key={i} className="font-mono text-sm text-muted-foreground bg-muted/30 px-2 py-1">{trimmedLine}</div>;
+                                  } else if (trimmedLine.startsWith('- ✅') || trimmedLine.startsWith('- ❌')) {
+                                    return <p key={i} className="text-muted-foreground ml-4 py-0.5">{trimmedLine.replace('- ', '')}</p>;
+                                  } else if (trimmedLine.startsWith('- **')) {
+                                    const match = trimmedLine.match(/- \*\*(.+?)\*\*:?\s*(.*)/)
+                                    if (match) {
+                                      return (
+                                        <div key={i} className="flex gap-2 text-muted-foreground ml-4 py-0.5">
+                                          <span className="text-primary">•</span>
+                                          <span><strong className="text-foreground">{match[1]}</strong>{match[2] ? `: ${match[2]}` : ''}</span>
+                                        </div>
+                                      );
+                                    }
+                                  } else if (trimmedLine.startsWith('- ')) {
+                                    return <p key={i} className="text-muted-foreground ml-4 flex gap-2 py-0.5"><span className="text-primary">•</span>{trimmedLine.replace('- ', '')}</p>;
+                                  } else if (trimmedLine.match(/^\d+\./)) {
+                                    return <p key={i} className="text-muted-foreground ml-4 py-0.5">{trimmedLine}</p>;
+                                  } else {
+                                    return <p key={i} className="text-muted-foreground leading-relaxed">{trimmedLine}</p>;
                                   }
-                                } else if (trimmedLine.startsWith('- ')) {
-                                  return <p key={i} className="text-muted-foreground ml-4 flex gap-2 py-0.5"><span className="text-primary">•</span>{trimmedLine.replace('- ', '')}</p>;
-                                } else if (trimmedLine.match(/^\d+\./)) {
-                                  return <p key={i} className="text-muted-foreground ml-4 py-0.5">{trimmedLine}</p>;
-                                } else {
-                                  return <p key={i} className="text-muted-foreground leading-relaxed">{trimmedLine}</p>;
-                                }
-                                return null;
-                              })}
+                                  return null;
+                                })}
+                              </div>
+                            </div>
+                            <div className="flex justify-end">
+                              {!module.completed ? (
+                                <Button 
+                                  variant="mood" 
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleComplete(module);
+                                  }}
+                                >
+                                  <CheckCircle2 className="w-4 h-4 mr-1" />
+                                  Mark as Complete
+                                </Button>
+                              ) : (
+                                <span className="text-sm text-primary font-medium flex items-center gap-1.5">
+                                  <CheckCircle2 className="w-4 h-4" />
+                                  Completed
+                                </span>
+                              )}
                             </div>
                           </div>
                         )}

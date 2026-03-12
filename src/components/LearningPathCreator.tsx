@@ -496,50 +496,59 @@ export function LearningPathCreator() {
 
               {/* Step 1: Mood + Camera/Mic */}
               {currentStep === 1 && (
-                <div className="space-y-6">
+                <div className="space-y-8">
                   <div className="text-center">
                     <motion.div
-                      className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${moodColors.gradient} flex items-center justify-center mx-auto mb-4`}
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
+                      className={`w-20 h-20 rounded-3xl bg-gradient-to-br ${moodColors.gradient} flex items-center justify-center mx-auto mb-5 shadow-2xl`}
+                      animate={{ scale: [1, 1.08, 1], rotate: [0, 3, -3, 0] }}
+                      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                     >
-                      <Brain className="w-8 h-8 text-foreground" />
+                      <Brain className="w-10 h-10 text-foreground" />
                     </motion.div>
                     <h2 className="font-display text-3xl font-bold mb-2">How are you feeling?</h2>
-                    <p className="text-muted-foreground">Select your mood or let AI detect it</p>
+                    <p className="text-muted-foreground text-sm">Select your current emotional state or let AI detect it automatically</p>
                   </div>
 
-                  {/* Camera & Mic Module */}
+                  {/* AI Detection Module - Redesigned */}
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="glass-card rounded-2xl p-4 border border-border/30"
+                    transition={{ delay: 0.15 }}
+                    className="glass-card rounded-2xl p-5 border border-primary/10"
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-muted-foreground">AI Emotion Detection</span>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${cameraOn || micOn ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground/40'}`} />
+                        <span className="text-sm font-semibold">AI Emotion Detection</span>
+                      </div>
                       <div className="flex gap-2">
                         <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
+                          whileHover={{ scale: 1.08 }}
+                          whileTap={{ scale: 0.92 }}
                           onClick={toggleCamera}
                           className={cn(
-                            'p-2.5 rounded-xl transition-all duration-300',
-                            cameraOn ? `bg-gradient-to-br ${moodColors.gradient} shadow-lg` : 'bg-secondary/50 hover:bg-secondary'
+                            'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300',
+                            cameraOn 
+                              ? `bg-gradient-to-br ${moodColors.gradient} shadow-lg text-foreground` 
+                              : 'bg-secondary/50 hover:bg-secondary text-muted-foreground'
                           )}
                         >
-                          {cameraOn ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4 text-muted-foreground" />}
+                          {cameraOn ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4" />}
+                          {cameraOn ? 'Camera On' : 'Camera'}
                         </motion.button>
                         <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
+                          whileHover={{ scale: 1.08 }}
+                          whileTap={{ scale: 0.92 }}
                           onClick={toggleMic}
                           className={cn(
-                            'p-2.5 rounded-xl transition-all duration-300 relative',
-                            micOn ? `bg-gradient-to-br ${moodColors.gradient} shadow-lg` : 'bg-secondary/50 hover:bg-secondary'
+                            'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 relative',
+                            micOn 
+                              ? `bg-gradient-to-br ${moodColors.gradient} shadow-lg text-foreground` 
+                              : 'bg-secondary/50 hover:bg-secondary text-muted-foreground'
                           )}
                         >
-                          {micOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4 text-muted-foreground" />}
+                          {micOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+                          {micOn ? 'Mic On' : 'Mic'}
                           {micOn && (
                             <motion.div
                               className="absolute inset-0 rounded-xl border-2 border-primary"
@@ -556,35 +565,35 @@ export function LearningPathCreator() {
                       {cameraOn && (
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 180, opacity: 1 }}
+                          animate={{ height: 200, opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.4 }}
-                          className="relative rounded-xl overflow-hidden mb-3 bg-background/80"
+                          className="relative rounded-2xl overflow-hidden mb-3 bg-background/80 border border-border/30"
                         >
-                          <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover rounded-xl" style={{ transform: 'scaleX(-1)' }} />
+                          <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover rounded-2xl" style={{ transform: 'scaleX(-1)' }} />
                           <canvas ref={canvasRef} className="hidden" />
                           <motion.div
                             className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/10 to-transparent"
                             animate={{ y: ['-100%', '100%'] }}
                             transition={{ duration: 2.5, repeat: Infinity, ease: 'linear' }}
                           />
-                          <div className="absolute bottom-2 left-2 right-2 flex items-center gap-2">
+                          <div className="absolute bottom-3 left-3 right-3 bg-background/60 backdrop-blur-md rounded-xl px-3 py-2 flex items-center gap-2">
                             {isDetecting ? (
                               <>
-                                <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                                <span className="text-xs text-foreground/80">Detecting emotion...</span>
+                                <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                                <span className="text-xs font-medium">Analyzing your expression...</span>
                               </>
                             ) : detectedEmotion?.source === 'face' ? (
                               <>
                                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                <span className="text-xs text-foreground/80">
-                                  {detectedEmotion.mood} ({Math.round(detectedEmotion.confidence * 100)}%)
+                                <span className="text-xs font-medium capitalize">
+                                  Detected: {detectedEmotion.mood} • {Math.round(detectedEmotion.confidence * 100)}% confidence
                                 </span>
                               </>
                             ) : (
                               <>
-                                <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
-                                <span className="text-xs text-foreground/80">Analyzing expressions...</span>
+                                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                                <span className="text-xs font-medium">Scanning your face...</span>
                               </>
                             )}
                           </div>
@@ -597,15 +606,15 @@ export function LearningPathCreator() {
                       {micOn && (
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 40, opacity: 1 }}
+                          animate={{ height: 48, opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          className="flex items-center gap-1 justify-center rounded-xl bg-background/50 px-4"
+                          className="flex items-center gap-1 justify-center rounded-xl bg-background/50 px-4 mb-3 border border-border/20"
                         >
-                          {Array.from({ length: 16 }).map((_, i) => (
+                          {Array.from({ length: 20 }).map((_, i) => (
                             <motion.div
                               key={i}
                               className={`w-1 rounded-full bg-gradient-to-t ${moodColors.gradient}`}
-                              animate={{ height: Math.max(4, audioLevel * 30 * (1 + Math.sin(i * 0.8) * 0.5)) }}
+                              animate={{ height: Math.max(4, audioLevel * 36 * (1 + Math.sin(i * 0.8) * 0.5)) }}
                               transition={{ duration: 0.05 }}
                             />
                           ))}
@@ -613,66 +622,85 @@ export function LearningPathCreator() {
                       )}
                     </AnimatePresence>
 
-                    {/* AI Detection Result Banner */}
+                    {/* AI Detection Result */}
                     <AnimatePresence>
                       {detectedEmotion && (
                         <motion.div
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0 }}
-                          className={`rounded-xl p-3 mt-2 bg-gradient-to-r ${moodConfig[detectedEmotion.mood].gradient} opacity-90`}
+                          className={`rounded-xl p-4 mt-2 bg-gradient-to-r ${moodConfig[detectedEmotion.mood].gradient}`}
                         >
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-medium text-foreground">
-                              {detectedEmotion.source === 'face' ? 'Face' : 'Voice'} detection → <strong>{detectedEmotion.mood}</strong>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold text-foreground">
+                              {detectedEmotion.source === 'face' ? '📷 Face' : '🎤 Voice'} → <span className="capitalize">{detectedEmotion.mood}</span>
                             </span>
-                            <span className="bg-background/30 px-2 py-0.5 rounded-full text-foreground font-semibold capitalize">
-                              {detectedEmotion.suggestedDifficulty}
+                            <span className="bg-background/30 px-3 py-1 rounded-full text-xs text-foreground font-semibold capitalize">
+                              {detectedEmotion.suggestedDifficulty} difficulty
                             </span>
                           </div>
-                          <p className="text-xs text-foreground/70 mt-1">{detectedEmotion.details}</p>
+                          <p className="text-xs text-foreground/70 mt-1.5">{detectedEmotion.details}</p>
                         </motion.div>
                       )}
                     </AnimatePresence>
 
                     {!cameraOn && !micOn && (
-                      <p className="text-xs text-muted-foreground text-center py-2">
-                        Enable camera or mic for AI emotion detection, or select manually below
-                      </p>
+                      <div className="text-center py-3">
+                        <p className="text-xs text-muted-foreground">
+                          Turn on camera or mic for automatic emotion detection, or pick your mood below
+                        </p>
+                      </div>
                     )}
                   </motion.div>
 
-                  {/* Mood Grid - no emojis, no descriptions */}
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    {moods.map(([moodType, config], i) => (
-                      <motion.button
-                        key={moodType}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: i * 0.05 }}
-                        whileHover={{ scale: 1.05, y: -4 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => {
-                          setMood(moodType);
-                          setData({ ...data, mood: moodType });
-                        }}
-                        className={cn(
-                          'p-4 rounded-2xl border transition-all duration-300 text-center relative overflow-hidden',
-                          data.mood === moodType
-                            ? `bg-gradient-to-br ${config.gradient} border-transparent shadow-lg ${config.glow}`
-                            : 'bg-secondary/30 border-border/50 hover:bg-secondary/50'
-                        )}
-                      >
-                        {data.mood === moodType && (
-                          <motion.div
-                            className="absolute inset-0 bg-white/10"
-                            animate={{ opacity: [0, 0.15, 0] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                          />
-                        )}
-                        <span className="font-semibold block">{config.label}</span>
-                      </motion.button>
-                    ))}
+                  {/* Mood Grid - Redesigned with better visual hierarchy */}
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 text-center">Or select manually</p>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                      {moods.map(([moodType, config], i) => (
+                        <motion.button
+                          key={moodType}
+                          initial={{ opacity: 0, scale: 0.85 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: i * 0.04 }}
+                          whileHover={{ scale: 1.06, y: -3 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => {
+                            setMood(moodType);
+                            setData({ ...data, mood: moodType });
+                          }}
+                          className={cn(
+                            'relative p-4 rounded-2xl border-2 transition-all duration-300 text-center overflow-hidden group',
+                            data.mood === moodType
+                              ? `bg-gradient-to-br ${config.gradient} border-transparent shadow-xl`
+                              : 'bg-card/40 border-border/30 hover:border-primary/30 hover:bg-card/60'
+                          )}
+                        >
+                          {data.mood === moodType && (
+                            <motion.div
+                              className="absolute inset-0 bg-white/10"
+                              animate={{ opacity: [0, 0.2, 0] }}
+                              transition={{ duration: 2, repeat: Infinity }}
+                            />
+                          )}
+                          <span className={cn(
+                            'font-semibold text-sm block transition-colors',
+                            data.mood === moodType ? 'text-foreground' : 'text-foreground/70 group-hover:text-foreground'
+                          )}>
+                            {config.label}
+                          </span>
+                          {data.mood === moodType && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="absolute top-1.5 right-1.5"
+                            >
+                              <CheckCircle2 className="w-4 h-4 text-foreground" />
+                            </motion.div>
+                          )}
+                        </motion.button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
