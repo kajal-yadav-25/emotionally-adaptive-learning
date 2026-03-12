@@ -782,7 +782,6 @@ export function LearningPathView() {
                                 )}
                               </div>
                             </div>
-                            {/* Quiz after video */}
                             {quizActiveFor === module.id && (
                               <ModuleQuiz
                                 topic={pathData.topic}
@@ -793,8 +792,6 @@ export function LearningPathView() {
                                 onSkip={() => handleQuizSkip(module.id)}
                               />
                             )}
-                              </div>
-                            </div>
                           </div>
                         )}
                         
