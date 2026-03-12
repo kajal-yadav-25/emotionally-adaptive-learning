@@ -764,14 +764,11 @@ export function LearningPathView() {
                                   <ExternalLink className="w-4 h-4 mr-2" />
                                   More on YouTube
                                 </Button>
-                                {!module.completed && (
+                                {!module.completed && quizActiveFor !== module.id && (
                                   <Button 
                                     variant="mood" 
                                     size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      toggleComplete(module);
-                                    }}
+                                    onClick={(e) => handleMarkComplete(module, e)}
                                   >
                                     <CheckCircle2 className="w-4 h-4 mr-1" />
                                     Mark as Complete
@@ -783,6 +780,19 @@ export function LearningPathView() {
                                     Completed
                                   </span>
                                 )}
+                              </div>
+                            </div>
+                            {/* Quiz after video */}
+                            {quizActiveFor === module.id && (
+                              <ModuleQuiz
+                                topic={pathData.topic}
+                                moduleTitle={module.title}
+                                moduleType={module.type}
+                                moodGradient={moodColors.gradient}
+                                onComplete={(score, total) => handleQuizComplete(module.id, score, total)}
+                                onSkip={() => handleQuizSkip(module.id)}
+                              />
+                            )}
                               </div>
                             </div>
                           </div>
