@@ -415,6 +415,8 @@ export function LearningPathView() {
   const [pathId, setPathId] = useState<string | null>(pathData?.pathId || null);
   const [modules, setModules] = useState<LearningModule[]>([]);
   const [expandedModule, setExpandedModule] = useState<number | null>(null);
+  const [quizActiveFor, setQuizActiveFor] = useState<number | null>(null);
+  const [quizCompletedFor, setQuizCompletedFor] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (pathData) {
