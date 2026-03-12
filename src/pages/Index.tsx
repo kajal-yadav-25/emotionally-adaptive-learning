@@ -19,11 +19,6 @@ const Index = () => {
     { icon: Shield, title: 'Safe Learning Space', description: 'Your emotional data is private and used only to enhance your experience.', gradient: 'from-teal-500 to-cyan-400' },
   ];
 
-  const testimonials = [
-    { name: 'Alex R.', role: 'CS Student', text: 'MoodLearn completely changed how I study. When I\'m anxious before exams, it gives me calming content first.', stars: 5 },
-    { name: 'Priya M.', role: 'Self-learner', text: 'The emotion detection is shockingly accurate. It knows when I need a break before I do.', stars: 5 },
-    { name: 'Jordan K.', role: 'Developer', text: 'Finally an app that understands that my 7am brain is different from my 10pm brain.', stars: 5 },
-  ];
 
   return (
     <div className="min-h-screen bg-background">
