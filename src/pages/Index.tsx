@@ -2,7 +2,7 @@ import { LandingHero } from '@/components/LandingHero';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useMood } from '@/contexts/MoodContext';
 import { useNavigate } from 'react-router-dom';
-import { Brain, Zap, LineChart, Users, Sparkles, Shield, ArrowRight, Star } from 'lucide-react';
+import { Brain, Zap, LineChart, Users, Sparkles, Shield, ArrowRight } from 'lucide-react';
 import { useRef } from 'react';
 
 const Index = () => {
@@ -19,11 +19,6 @@ const Index = () => {
     { icon: Shield, title: 'Safe Learning Space', description: 'Your emotional data is private and used only to enhance your experience.', gradient: 'from-teal-500 to-cyan-400' },
   ];
 
-  const testimonials = [
-    { name: 'Alex R.', role: 'CS Student', text: 'MoodLearn completely changed how I study. When I\'m anxious before exams, it gives me calming content first.', stars: 5 },
-    { name: 'Priya M.', role: 'Self-learner', text: 'The emotion detection is shockingly accurate. It knows when I need a break before I do.', stars: 5 },
-    { name: 'Jordan K.', role: 'Developer', text: 'Finally an app that understands that my 7am brain is different from my 10pm brain.', stars: 5 },
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -85,57 +80,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-24 relative">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r ${moodColors.gradient} rounded-full blur-[180px] opacity-5`} />
-        </div>
-        <div className="relative container mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-14"
-          >
-            <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
-              Testimonials
-            </span>
-            <h2 className="font-display text-4xl md:text-5xl font-bold tracking-tight">
-              Loved by <span className={`bg-gradient-to-r ${moodColors.gradient} bg-clip-text text-transparent`}>learners</span>
-            </h2>
-          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {testimonials.map((t, i) => (
-              <motion.div
-                key={t.name}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                whileHover={{ y: -4 }}
-                className="glass-card-hover rounded-2xl p-7 glow-border"
-              >
-                <div className="flex gap-1 mb-4">
-                  {Array.from({ length: t.stars }).map((_, j) => (
-                    <Star key={j} className="w-4 h-4 fill-primary text-primary" />
-                  ))}
-                </div>
-                <p className="text-foreground/90 text-sm leading-relaxed mb-5 italic">"{t.text}"</p>
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${moodColors.gradient} flex items-center justify-center text-sm font-bold`}>
-                    {t.name.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+
 
       {/* CTA Section */}
       <section className="py-28 relative">
