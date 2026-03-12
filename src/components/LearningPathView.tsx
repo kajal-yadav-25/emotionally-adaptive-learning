@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
+import { ModuleQuiz } from '@/components/ModuleQuiz';
 
 interface LearningModule {
   id: number;
