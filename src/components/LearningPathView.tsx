@@ -469,6 +469,37 @@ export function LearningPathView() {
     ));
   };
 
+  const handleMarkComplete = (module: LearningModule, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (quizCompletedFor.has(module.id)) {
+      // Quiz already done, just complete
+      toggleComplete(module);
+    } else {
+      // Show quiz first
+      setQuizActiveFor(module.id);
+    }
+  };
+
+  const handleQuizComplete = (moduleId: number, score: number, total: number) => {
+    setQuizActiveFor(null);
+    setQuizCompletedFor(prev => new Set(prev).add(moduleId));
+    // Auto-complete the module after quiz
+    const module = modules.find(m => m.id === moduleId);
+    if (module && !module.completed) {
+      toggleComplete(module);
+    }
+  };
+
+  const handleQuizSkip = (moduleId: number) => {
+    setQuizActiveFor(null);
+    setQuizCompletedFor(prev => new Set(prev).add(moduleId));
+    // Complete without quiz
+    const module = modules.find(m => m.id === moduleId);
+    if (module && !module.completed) {
+      toggleComplete(module);
+    }
+  };
+
   const toggleExpand = (moduleId: number, e: React.MouseEvent) => {
     e.stopPropagation();
     setExpandedModule(expandedModule === moduleId ? null : moduleId);
