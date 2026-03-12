@@ -837,25 +837,32 @@ export function LearningPathView() {
                               </div>
                             </div>
                             <div className="flex justify-end">
-                              {!module.completed ? (
+                              {!module.completed && quizActiveFor !== module.id ? (
                                 <Button 
                                   variant="mood" 
                                   size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleComplete(module);
-                                  }}
+                                  onClick={(e) => handleMarkComplete(module, e)}
                                 >
                                   <CheckCircle2 className="w-4 h-4 mr-1" />
                                   Mark as Complete
                                 </Button>
-                              ) : (
+                              ) : module.completed ? (
                                 <span className="text-sm text-primary font-medium flex items-center gap-1.5">
                                   <CheckCircle2 className="w-4 h-4" />
                                   Completed
                                 </span>
-                              )}
+                              ) : null}
                             </div>
+                            {quizActiveFor === module.id && (
+                              <ModuleQuiz
+                                topic={pathData.topic}
+                                moduleTitle={module.title}
+                                moduleType={module.type}
+                                moodGradient={moodColors.gradient}
+                                onComplete={(score, total) => handleQuizComplete(module.id, score, total)}
+                                onSkip={() => handleQuizSkip(module.id)}
+                              />
+                            )}
                           </div>
                         )}
                       </div>
