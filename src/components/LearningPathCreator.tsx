@@ -21,7 +21,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { emotionApi } from '@/lib/api';
 
 type ContentFormat = 'videos' | 'articles' | 'mixed';
 
@@ -186,10 +186,7 @@ export function LearningPathCreator() {
 
     setIsDetecting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('detect-face-emotion', {
-        body: { imageBase64 },
-      });
-      if (error) throw error;
+      const data = await emotionApi.detectFace(imageBase64);
       if (data && !data.error && data.faceDetected !== false) {
         const result = data as { mood: MoodType; confidence: number; suggestedDifficulty: 'easy' | 'medium' | 'moderate' | 'hard'; emotionDetails: string };
         setDetectedEmotion({ mood: result.mood, confidence: result.confidence, suggestedDifficulty: result.suggestedDifficulty, details: result.emotionDetails, source: 'face' });
@@ -215,10 +212,7 @@ export function LearningPathCreator() {
     audioLevelHistoryRef.current = [];
 
     try {
-      const { data, error } = await supabase.functions.invoke('detect-voice-emotion', {
-        body: { audioFeatures: { avgLevel, maxLevel, variance } },
-      });
-      if (error) throw error;
+      const data = await emotionApi.detectVoice({ avgLevel, maxLevel, variance });
       if (data && !data.error) {
         const result = data as { mood: MoodType; confidence: number; suggestedDifficulty: 'easy' | 'medium' | 'moderate' | 'hard'; voiceTone: string };
         if (!detectedEmotion || detectedEmotion.source === 'voice') {
