@@ -186,10 +186,7 @@ export function LearningPathCreator() {
 
     setIsDetecting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('detect-face-emotion', {
-        body: { imageBase64 },
-      });
-      if (error) throw error;
+      const data = await emotionApi.detectFace(imageBase64);
       if (data && !data.error && data.faceDetected !== false) {
         const result = data as { mood: MoodType; confidence: number; suggestedDifficulty: 'easy' | 'medium' | 'moderate' | 'hard'; emotionDetails: string };
         setDetectedEmotion({ mood: result.mood, confidence: result.confidence, suggestedDifficulty: result.suggestedDifficulty, details: result.emotionDetails, source: 'face' });
