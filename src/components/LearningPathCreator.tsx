@@ -212,10 +212,7 @@ export function LearningPathCreator() {
     audioLevelHistoryRef.current = [];
 
     try {
-      const { data, error } = await supabase.functions.invoke('detect-voice-emotion', {
-        body: { audioFeatures: { avgLevel, maxLevel, variance } },
-      });
-      if (error) throw error;
+      const data = await emotionApi.detectVoice({ avgLevel, maxLevel, variance });
       if (data && !data.error) {
         const result = data as { mood: MoodType; confidence: number; suggestedDifficulty: 'easy' | 'medium' | 'moderate' | 'hard'; voiceTone: string };
         if (!detectedEmotion || detectedEmotion.source === 'voice') {
