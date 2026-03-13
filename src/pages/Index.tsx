@@ -2,7 +2,7 @@ import { LandingHero } from '@/components/LandingHero';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useMood } from '@/contexts/MoodContext';
 import { useNavigate } from 'react-router-dom';
-import { Brain, Zap, LineChart, Users, Sparkles, Shield, ArrowRight } from 'lucide-react';
+import { Brain, Zap, LineChart, Sparkles, Shield, ArrowRight } from 'lucide-react';
 import { useRef } from 'react';
 
 const Index = () => {
@@ -14,7 +14,7 @@ const Index = () => {
     { icon: Brain, title: 'Emotion AI', description: 'Advanced algorithms detect your emotional state and adjust learning content accordingly.', gradient: 'from-orange-500 to-amber-400' },
     { icon: Zap, title: 'Adaptive Pacing', description: 'Content difficulty and speed adapt in real-time based on your energy levels.', gradient: 'from-blue-500 to-cyan-400' },
     { icon: LineChart, title: 'Progress Analytics', description: 'Track your learning patterns and emotional trends over time.', gradient: 'from-green-500 to-emerald-400' },
-    { icon: Users, title: 'Community Learning', description: 'Connect with learners who share similar emotional learning patterns.', gradient: 'from-purple-500 to-pink-400' },
+    
     { icon: Sparkles, title: 'Smart Recommendations', description: 'Get personalized content suggestions based on your mood history.', gradient: 'from-rose-500 to-pink-400' },
     { icon: Shield, title: 'Safe Learning Space', description: 'Your emotional data is private and used only to enhance your experience.', gradient: 'from-teal-500 to-cyan-400' },
   ];
