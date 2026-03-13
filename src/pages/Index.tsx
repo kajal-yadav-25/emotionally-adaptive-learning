@@ -2,7 +2,7 @@ import { LandingHero } from '@/components/LandingHero';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useMood } from '@/contexts/MoodContext';
 import { useNavigate } from 'react-router-dom';
-import { Brain, Zap, LineChart, Users, Sparkles, Shield, ArrowRight } from 'lucide-react';
+import { Brain, Zap, LineChart, Sparkles, Shield, ArrowRight } from 'lucide-react';
 import { useRef } from 'react';
 
 const Index = () => {
