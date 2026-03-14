@@ -414,7 +414,7 @@ export function LearningPathCreator() {
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${cameraOn || micOn ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground/40'}`} />
-                        <span className="text-sm font-semibold">AI Emotion Detection</span>
+                        <span className="text-sm font-semibold">Camera & Mic Input</span>
                       </div>
                       <div className="flex gap-2">
                         <motion.button
