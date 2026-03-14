@@ -521,10 +521,9 @@ export function LearningPathView() {
     format: string; 
     goal: string;
     pathId?: string;
-    suggestedDifficulty?: string | null;
-    emotionSource?: string | null;
-    detectedConfidence?: number | null;
   } | null;
+  
+  const strategy = pathData ? getEmotionStrategy((pathData.mood || 'focused') as MoodType) : null;
   
   const [pathId, setPathId] = useState<string | null>(pathData?.pathId || null);
   const [modules, setModules] = useState<LearningModule[]>([]);
