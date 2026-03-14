@@ -498,32 +498,11 @@ export function LearningPathCreator() {
                       )}
                     </AnimatePresence>
 
-                    {/* AI Detection Result */}
-                    <AnimatePresence>
-                      {detectedEmotion && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
-                          className={`rounded-xl p-4 mt-2 bg-gradient-to-r ${moodConfig[detectedEmotion.mood].gradient}`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-foreground">
-                              {detectedEmotion.source === 'face' ? '📷 Face' : '🎤 Voice'} → <span className="capitalize">{detectedEmotion.mood}</span>
-                            </span>
-                            <span className="bg-background/30 px-3 py-1 rounded-full text-xs text-foreground font-semibold capitalize">
-                              {detectedEmotion.suggestedDifficulty} difficulty
-                            </span>
-                          </div>
-                          <p className="text-xs text-foreground/70 mt-1.5">{detectedEmotion.details}</p>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
 
                     {!cameraOn && !micOn && (
                       <div className="text-center py-3">
                         <p className="text-xs text-muted-foreground">
-                          Turn on camera or mic for automatic emotion detection, or pick your mood below
+                          Turn on camera or mic to capture your input, or pick your mood below
                         </p>
                       </div>
                     )}
