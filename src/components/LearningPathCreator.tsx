@@ -154,7 +154,6 @@ export function LearningPathCreator() {
       setStream(null);
     }
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    if (faceDetectIntervalRef.current) clearInterval(faceDetectIntervalRef.current);
     setCameraOn(false);
     setMicOn(false);
     setAudioLevel(0);
@@ -164,89 +163,8 @@ export function LearningPathCreator() {
     return () => {
       if (stream) stream.getTracks().forEach(t => t.stop());
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-      if (faceDetectIntervalRef.current) clearInterval(faceDetectIntervalRef.current);
     };
   }, [stream]);
-
-  // Face emotion detection
-  const captureFrameAndDetect = useCallback(async () => {
-    if (!videoRef.current || !cameraOn || isDetecting) return;
-    const video = videoRef.current;
-    if (video.readyState < 2) return;
-
-    const canvas = canvasRef.current || document.createElement('canvas');
-    canvas.width = 320;
-    canvas.height = 240;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.drawImage(video, 0, 0, 320, 240);
-    const imageBase64 = canvas.toDataURL('image/jpeg', 0.7);
-
-    setIsDetecting(true);
-    try {
-      const data = await emotionApi.detectFace(imageBase64);
-      if (data && !data.error && data.faceDetected !== false) {
-        const result = data as { mood: MoodType; confidence: number; suggestedDifficulty: 'easy' | 'medium' | 'moderate' | 'hard'; emotionDetails: string };
-        setDetectedEmotion({ mood: result.mood, confidence: result.confidence, suggestedDifficulty: result.suggestedDifficulty, details: result.emotionDetails, source: 'face' });
-        setMood(result.mood);
-        setData(prev => ({ ...prev, mood: result.mood }));
-        toast.success(`Mood detected: ${result.mood}`, { description: `Confidence: ${Math.round(result.confidence * 100)}%` });
-      }
-    } catch (err) {
-      console.error('Face emotion detection error:', err);
-    } finally {
-      setIsDetecting(false);
-    }
-  }, [cameraOn, isDetecting, setMood]);
-
-  // Voice emotion detection
-  const analyzeVoiceEmotion = useCallback(async () => {
-    if (audioLevelHistoryRef.current.length < 10) return;
-    const history = audioLevelHistoryRef.current;
-    const avgLevel = history.reduce((a, b) => a + b, 0) / history.length;
-    const maxLevel = Math.max(...history);
-    const mean = avgLevel;
-    const variance = history.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / history.length;
-    audioLevelHistoryRef.current = [];
-
-    try {
-      const data = await emotionApi.detectVoice({ avgLevel, maxLevel, variance });
-      if (data && !data.error) {
-        const result = data as { mood: MoodType; confidence: number; suggestedDifficulty: 'easy' | 'medium' | 'moderate' | 'hard'; voiceTone: string };
-        if (!detectedEmotion || detectedEmotion.source === 'voice') {
-          setDetectedEmotion({ mood: result.mood, confidence: result.confidence, suggestedDifficulty: result.suggestedDifficulty, details: result.voiceTone, source: 'voice' });
-          setMood(result.mood);
-          setData(prev => ({ ...prev, mood: result.mood }));
-          toast.success(`Voice mood detected: ${result.mood}`, { description: result.voiceTone });
-        }
-      }
-    } catch (err) {
-      console.error('Voice emotion detection error:', err);
-    }
-  }, [detectedEmotion, setMood]);
-
-  // Periodic face capture
-  useEffect(() => {
-    if (cameraOn) {
-      const initialTimeout = setTimeout(() => {
-        captureFrameAndDetect();
-        faceDetectIntervalRef.current = setInterval(captureFrameAndDetect, 15000);
-      }, 4000);
-      return () => {
-        clearTimeout(initialTimeout);
-        if (faceDetectIntervalRef.current) clearInterval(faceDetectIntervalRef.current);
-      };
-    } else {
-      if (faceDetectIntervalRef.current) { clearInterval(faceDetectIntervalRef.current); faceDetectIntervalRef.current = null; }
-    }
-  }, [cameraOn, captureFrameAndDetect]);
-
-  // Periodic voice analysis
-  useEffect(() => {
-    if (!micOn) return;
-    const interval = setInterval(analyzeVoiceEmotion, 10000);
-    return () => clearInterval(interval);
-  }, [micOn, analyzeVoiceEmotion]);
 
   const toggleCamera = async () => {
     if (cameraOn) { stopStream(); return; }
