@@ -16,11 +16,15 @@ import {
   History,
   ChevronUp,
   ExternalLink,
-  Brain
+  Brain,
+  Lightbulb,
+  Zap,
+  Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { ModuleQuiz } from '@/components/ModuleQuiz';
+import { getEmotionStrategy, getDifficultyColor, getDifficultyLabel, type EmotionStrategy, type DifficultyLevel } from '@/lib/emotion-learning-map';
 
 interface LearningModule {
   id: number;
