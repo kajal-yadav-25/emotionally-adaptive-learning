@@ -21,7 +21,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { emotionApi } from '@/lib/api';
 
 type ContentFormat = 'videos' | 'articles' | 'mixed';
 
