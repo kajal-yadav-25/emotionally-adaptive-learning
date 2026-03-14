@@ -732,6 +732,35 @@ export function LearningPathView() {
           </div>
         </motion.div>
 
+        {/* Emotion Strategy Banner */}
+        {strategy && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className={`glass-card rounded-2xl p-5 mb-8 border border-primary/10`}
+          >
+            <div className="flex items-start gap-4">
+              <div className={`p-3 rounded-xl bg-gradient-to-br ${getDifficultyColor(strategy.difficulty)} text-white shrink-0`}>
+                <Lightbulb className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg font-semibold">{strategy.icon} {strategy.label}</span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-2">{strategy.description}</p>
+                <p className="text-sm font-medium text-foreground/80 italic">"{strategy.encouragementMessage}"</p>
+                {strategy.showHints && (
+                  <div className="mt-3 flex items-center gap-2 text-xs text-primary">
+                    <Lightbulb className="w-3.5 h-3.5" />
+                    <span>Hints are enabled for this path to help guide you</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Modules */}
         <div className="space-y-4">
           {modules.map((module, index) => {
