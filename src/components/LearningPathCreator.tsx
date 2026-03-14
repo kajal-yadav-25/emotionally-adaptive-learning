@@ -16,7 +16,6 @@ import {
   CameraOff,
   Mic,
   MicOff,
-  Loader2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
