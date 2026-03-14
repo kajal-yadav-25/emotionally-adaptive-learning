@@ -200,8 +200,6 @@ export function LearningPathCreator() {
         const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
         const normalized = avg / 255;
         setAudioLevel(normalized);
-        audioLevelHistoryRef.current.push(normalized);
-        if (audioLevelHistoryRef.current.length > 50) audioLevelHistoryRef.current.shift();
         animFrameRef.current = requestAnimationFrame(updateLevel);
       };
       updateLevel();
