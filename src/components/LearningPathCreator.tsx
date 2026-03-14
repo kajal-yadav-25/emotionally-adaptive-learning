@@ -175,7 +175,7 @@ export function LearningPathCreator() {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       setMicOn(false);
       setAudioLevel(0);
-      audioLevelHistoryRef.current = [];
+      
       return;
     }
     try {
