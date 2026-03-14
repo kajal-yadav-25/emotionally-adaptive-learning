@@ -47,14 +47,8 @@ export const authApi = {
   getMe: () => apiCall<{ user: any }>('/auth/me'),
 };
 
-// Emotion detection API helpers
-export const emotionApi = {
-  detectFace: (imageBase64: string) =>
-    apiCall('/emotion/detect-face', { method: 'POST', body: { imageBase64 } }),
 
-  detectVoice: (audioFeatures: { avgLevel: number; maxLevel: number; variance: number }) =>
-    apiCall('/emotion/detect-voice', { method: 'POST', body: { audioFeatures } }),
-};
+
 
 // Learning path API helpers (for future use)
 export const learningApi = {
