@@ -469,30 +469,9 @@ export function LearningPathCreator() {
                         >
                           <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover rounded-2xl" style={{ transform: 'scaleX(-1)' }} />
                           <canvas ref={canvasRef} className="hidden" />
-                          <motion.div
-                            className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/10 to-transparent"
-                            animate={{ y: ['-100%', '100%'] }}
-                            transition={{ duration: 2.5, repeat: Infinity, ease: 'linear' }}
-                          />
                           <div className="absolute bottom-3 left-3 right-3 bg-background/60 backdrop-blur-md rounded-xl px-3 py-2 flex items-center gap-2">
-                            {isDetecting ? (
-                              <>
-                                <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                                <span className="text-xs font-medium">Analyzing your expression...</span>
-                              </>
-                            ) : detectedEmotion?.source === 'face' ? (
-                              <>
-                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                <span className="text-xs font-medium capitalize">
-                                  Detected: {detectedEmotion.mood} • {Math.round(detectedEmotion.confidence * 100)}% confidence
-                                </span>
-                              </>
-                            ) : (
-                              <>
-                                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                                <span className="text-xs font-medium">Scanning your face...</span>
-                              </>
-                            )}
+                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                            <span className="text-xs font-medium">Camera is live</span>
                           </div>
                         </motion.div>
                       )}
