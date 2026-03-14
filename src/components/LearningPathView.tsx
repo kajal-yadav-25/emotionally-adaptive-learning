@@ -802,7 +802,7 @@ export function LearningPathView() {
                     )}>
                       {module.title}
                     </h3>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1 flex-wrap">
                       <span className="flex items-center gap-1.5 capitalize">
                         <Icon className="w-3.5 h-3.5" />
                         {module.type}
@@ -811,10 +811,19 @@ export function LearningPathView() {
                         <Clock className="w-3 h-3" />
                         {module.duration}
                       </span>
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-gradient-to-r ${getDifficultyColor(module.difficulty)} text-white`}>
+                        {getDifficultyLabel(module.difficulty)}
+                      </span>
                       {module.completed && (
                         <span className="text-xs text-primary font-medium">✓ Completed</span>
                       )}
                     </div>
+                    {module.hint && strategy?.showHints && !module.completed && (
+                      <div className="flex items-center gap-1.5 mt-2 text-xs text-primary/80">
+                        <Lightbulb className="w-3 h-3 shrink-0" />
+                        <span>{module.hint}</span>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {/* Start button opens the content */}
