@@ -401,7 +401,7 @@ export function LearningPathCreator() {
                       <Brain className="w-10 h-10 text-foreground" />
                     </motion.div>
                     <h2 className="font-display text-3xl font-bold mb-2">How are you feeling?</h2>
-                    <p className="text-muted-foreground text-sm">Select your current emotional state or let AI detect it automatically</p>
+                    <p className="text-muted-foreground text-sm">Select your current emotional state or use your camera & mic</p>
                   </div>
 
                   {/* AI Detection Module - Redesigned */}
