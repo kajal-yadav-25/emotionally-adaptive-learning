@@ -16,12 +16,10 @@ import {
   CameraOff,
   Mic,
   MicOff,
-  Loader2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { emotionApi } from '@/lib/api';
 
 type ContentFormat = 'videos' | 'articles' | 'mixed';
 
@@ -138,17 +136,7 @@ export function LearningPathCreator() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animFrameRef = useRef<number | null>(null);
 
-  // AI Emotion Detection state
-  const [isDetecting, setIsDetecting] = useState(false);
-  const [detectedEmotion, setDetectedEmotion] = useState<{
-    mood: MoodType;
-    confidence: number;
-    suggestedDifficulty: 'easy' | 'medium' | 'moderate' | 'hard';
-    details: string;
-    source: 'face' | 'voice';
-  } | null>(null);
-  const faceDetectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const audioLevelHistoryRef = useRef<number[]>([]);
+
 
   const stopStream = useCallback(() => {
     if (stream) {
@@ -156,7 +144,6 @@ export function LearningPathCreator() {
       setStream(null);
     }
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    if (faceDetectIntervalRef.current) clearInterval(faceDetectIntervalRef.current);
     setCameraOn(false);
     setMicOn(false);
     setAudioLevel(0);
@@ -166,89 +153,8 @@ export function LearningPathCreator() {
     return () => {
       if (stream) stream.getTracks().forEach(t => t.stop());
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-      if (faceDetectIntervalRef.current) clearInterval(faceDetectIntervalRef.current);
     };
   }, [stream]);
-
-  // Face emotion detection
-  const captureFrameAndDetect = useCallback(async () => {
-    if (!videoRef.current || !cameraOn || isDetecting) return;
-    const video = videoRef.current;
-    if (video.readyState < 2) return;
-
-    const canvas = canvasRef.current || document.createElement('canvas');
-    canvas.width = 320;
-    canvas.height = 240;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.drawImage(video, 0, 0, 320, 240);
-    const imageBase64 = canvas.toDataURL('image/jpeg', 0.7);
-
-    setIsDetecting(true);
-    try {
-      const data = await emotionApi.detectFace(imageBase64);
-      if (data && !data.error && data.faceDetected !== false) {
-        const result = data as { mood: MoodType; confidence: number; suggestedDifficulty: 'easy' | 'medium' | 'moderate' | 'hard'; emotionDetails: string };
-        setDetectedEmotion({ mood: result.mood, confidence: result.confidence, suggestedDifficulty: result.suggestedDifficulty, details: result.emotionDetails, source: 'face' });
-        setMood(result.mood);
-        setData(prev => ({ ...prev, mood: result.mood }));
-        toast.success(`Mood detected: ${result.mood}`, { description: `Confidence: ${Math.round(result.confidence * 100)}%` });
-      }
-    } catch (err) {
-      console.error('Face emotion detection error:', err);
-    } finally {
-      setIsDetecting(false);
-    }
-  }, [cameraOn, isDetecting, setMood]);
-
-  // Voice emotion detection
-  const analyzeVoiceEmotion = useCallback(async () => {
-    if (audioLevelHistoryRef.current.length < 10) return;
-    const history = audioLevelHistoryRef.current;
-    const avgLevel = history.reduce((a, b) => a + b, 0) / history.length;
-    const maxLevel = Math.max(...history);
-    const mean = avgLevel;
-    const variance = history.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / history.length;
-    audioLevelHistoryRef.current = [];
-
-    try {
-      const data = await emotionApi.detectVoice({ avgLevel, maxLevel, variance });
-      if (data && !data.error) {
-        const result = data as { mood: MoodType; confidence: number; suggestedDifficulty: 'easy' | 'medium' | 'moderate' | 'hard'; voiceTone: string };
-        if (!detectedEmotion || detectedEmotion.source === 'voice') {
-          setDetectedEmotion({ mood: result.mood, confidence: result.confidence, suggestedDifficulty: result.suggestedDifficulty, details: result.voiceTone, source: 'voice' });
-          setMood(result.mood);
-          setData(prev => ({ ...prev, mood: result.mood }));
-          toast.success(`Voice mood detected: ${result.mood}`, { description: result.voiceTone });
-        }
-      }
-    } catch (err) {
-      console.error('Voice emotion detection error:', err);
-    }
-  }, [detectedEmotion, setMood]);
-
-  // Periodic face capture
-  useEffect(() => {
-    if (cameraOn) {
-      const initialTimeout = setTimeout(() => {
-        captureFrameAndDetect();
-        faceDetectIntervalRef.current = setInterval(captureFrameAndDetect, 15000);
-      }, 4000);
-      return () => {
-        clearTimeout(initialTimeout);
-        if (faceDetectIntervalRef.current) clearInterval(faceDetectIntervalRef.current);
-      };
-    } else {
-      if (faceDetectIntervalRef.current) { clearInterval(faceDetectIntervalRef.current); faceDetectIntervalRef.current = null; }
-    }
-  }, [cameraOn, captureFrameAndDetect]);
-
-  // Periodic voice analysis
-  useEffect(() => {
-    if (!micOn) return;
-    const interval = setInterval(analyzeVoiceEmotion, 10000);
-    return () => clearInterval(interval);
-  }, [micOn, analyzeVoiceEmotion]);
 
   const toggleCamera = async () => {
     if (cameraOn) { stopStream(); return; }
@@ -269,7 +175,7 @@ export function LearningPathCreator() {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       setMicOn(false);
       setAudioLevel(0);
-      audioLevelHistoryRef.current = [];
+      
       return;
     }
     try {
@@ -294,8 +200,6 @@ export function LearningPathCreator() {
         const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
         const normalized = avg / 255;
         setAudioLevel(normalized);
-        audioLevelHistoryRef.current.push(normalized);
-        if (audioLevelHistoryRef.current.length > 50) audioLevelHistoryRef.current.shift();
         animFrameRef.current = requestAnimationFrame(updateLevel);
       };
       updateLevel();
@@ -341,9 +245,6 @@ export function LearningPathCreator() {
         state: { 
           ...data, 
           goal: `Learn ${data.topic}`,
-          suggestedDifficulty: detectedEmotion?.suggestedDifficulty || null,
-          emotionSource: detectedEmotion?.source || null,
-          detectedConfidence: detectedEmotion?.confidence || null,
         } 
       });
     }, 2000);
@@ -500,7 +401,7 @@ export function LearningPathCreator() {
                       <Brain className="w-10 h-10 text-foreground" />
                     </motion.div>
                     <h2 className="font-display text-3xl font-bold mb-2">How are you feeling?</h2>
-                    <p className="text-muted-foreground text-sm">Select your current emotional state or let AI detect it automatically</p>
+                    <p className="text-muted-foreground text-sm">Select your current emotional state or use your camera & mic</p>
                   </div>
 
                   {/* AI Detection Module - Redesigned */}
@@ -513,7 +414,7 @@ export function LearningPathCreator() {
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${cameraOn || micOn ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground/40'}`} />
-                        <span className="text-sm font-semibold">AI Emotion Detection</span>
+                        <span className="text-sm font-semibold">Camera & Mic Input</span>
                       </div>
                       <div className="flex gap-2">
                         <motion.button
@@ -566,30 +467,9 @@ export function LearningPathCreator() {
                         >
                           <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover rounded-2xl" style={{ transform: 'scaleX(-1)' }} />
                           <canvas ref={canvasRef} className="hidden" />
-                          <motion.div
-                            className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/10 to-transparent"
-                            animate={{ y: ['-100%', '100%'] }}
-                            transition={{ duration: 2.5, repeat: Infinity, ease: 'linear' }}
-                          />
                           <div className="absolute bottom-3 left-3 right-3 bg-background/60 backdrop-blur-md rounded-xl px-3 py-2 flex items-center gap-2">
-                            {isDetecting ? (
-                              <>
-                                <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                                <span className="text-xs font-medium">Analyzing your expression...</span>
-                              </>
-                            ) : detectedEmotion?.source === 'face' ? (
-                              <>
-                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                <span className="text-xs font-medium capitalize">
-                                  Detected: {detectedEmotion.mood} • {Math.round(detectedEmotion.confidence * 100)}% confidence
-                                </span>
-                              </>
-                            ) : (
-                              <>
-                                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                                <span className="text-xs font-medium">Scanning your face...</span>
-                              </>
-                            )}
+                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                            <span className="text-xs font-medium">Camera is live</span>
                           </div>
                         </motion.div>
                       )}
@@ -616,32 +496,11 @@ export function LearningPathCreator() {
                       )}
                     </AnimatePresence>
 
-                    {/* AI Detection Result */}
-                    <AnimatePresence>
-                      {detectedEmotion && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
-                          className={`rounded-xl p-4 mt-2 bg-gradient-to-r ${moodConfig[detectedEmotion.mood].gradient}`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-foreground">
-                              {detectedEmotion.source === 'face' ? '📷 Face' : '🎤 Voice'} → <span className="capitalize">{detectedEmotion.mood}</span>
-                            </span>
-                            <span className="bg-background/30 px-3 py-1 rounded-full text-xs text-foreground font-semibold capitalize">
-                              {detectedEmotion.suggestedDifficulty} difficulty
-                            </span>
-                          </div>
-                          <p className="text-xs text-foreground/70 mt-1.5">{detectedEmotion.details}</p>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
 
                     {!cameraOn && !micOn && (
                       <div className="text-center py-3">
                         <p className="text-xs text-muted-foreground">
-                          Turn on camera or mic for automatic emotion detection, or pick your mood below
+                          Turn on camera or mic to capture your input, or pick your mood below
                         </p>
                       </div>
                     )}
