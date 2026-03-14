@@ -247,9 +247,6 @@ export function LearningPathCreator() {
         state: { 
           ...data, 
           goal: `Learn ${data.topic}`,
-          suggestedDifficulty: detectedEmotion?.suggestedDifficulty || null,
-          emotionSource: detectedEmotion?.source || null,
-          detectedConfidence: detectedEmotion?.confidence || null,
         } 
       });
     }, 2000);
