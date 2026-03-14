@@ -533,7 +533,7 @@ export function LearningPathView() {
 
   useEffect(() => {
     if (pathData) {
-      const generatedModules = generateModules(pathData.topic, pathData.format);
+      const generatedModules = generateModules(pathData.topic, pathData.format, (pathData.mood || 'focused') as MoodType);
       
       if (pathData.pathId) {
         const existingPath = getPathById(pathData.pathId);
