@@ -136,17 +136,7 @@ export function LearningPathCreator() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animFrameRef = useRef<number | null>(null);
 
-  // AI Emotion Detection state
-  const [isDetecting, setIsDetecting] = useState(false);
-  const [detectedEmotion, setDetectedEmotion] = useState<{
-    mood: MoodType;
-    confidence: number;
-    suggestedDifficulty: 'easy' | 'medium' | 'moderate' | 'hard';
-    details: string;
-    source: 'face' | 'voice';
-  } | null>(null);
-  const faceDetectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const audioLevelHistoryRef = useRef<number[]>([]);
+
 
   const stopStream = useCallback(() => {
     if (stream) {
