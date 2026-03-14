@@ -682,7 +682,7 @@ export function LearningPathView() {
               </div>
               <h1 className="font-display text-4xl font-bold mb-2">{pathData.topic}</h1>
               <p className="text-muted-foreground">{pathData.goal}</p>
-              {/* Mood & Difficulty Indicator */}
+              {/* Mood & Strategy Indicator */}
               <div className="flex items-center gap-3 mt-3 flex-wrap">
                 {pathData.mood && moodConfig[pathData.mood as MoodType] && (
                   <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-gradient-to-r ${moodConfig[pathData.mood as MoodType].gradient} text-foreground`}>
@@ -690,16 +690,17 @@ export function LearningPathView() {
                     {moodConfig[pathData.mood as MoodType].label}
                   </span>
                 )}
-                {pathData.suggestedDifficulty && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-secondary/60 text-foreground capitalize">
-                    Difficulty: {pathData.suggestedDifficulty}
-                  </span>
-                )}
-                {pathData.emotionSource && (
-                  <span className="text-xs text-muted-foreground">
-                    via {pathData.emotionSource === 'face' ? 'camera' : 'voice'} detection
-                    {pathData.detectedConfidence ? ` (${Math.round(pathData.detectedConfidence * 100)}%)` : ''}
-                  </span>
+                {strategy && (
+                  <>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-gradient-to-r ${getDifficultyColor(strategy.difficulty)} text-white`}>
+                      <Zap className="w-3.5 h-3.5" />
+                      {getDifficultyLabel(strategy.difficulty)}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-secondary/60 text-foreground">
+                      <Shield className="w-3.5 h-3.5" />
+                      {strategy.label}
+                    </span>
+                  </>
                 )}
               </div>
             </div>
